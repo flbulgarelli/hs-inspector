@@ -5,6 +5,31 @@ import           Inspector
 
 spec :: Spec
 spec = do
+  describe "parsing analyzer" $ do
+    it "detects parseable code" $ do
+      isParseable "x = 3" `shouldBe` True
+
+    it "detects unparseable code" $ do
+      isParseable "3" `shouldBe` False
+
+  describe "hasBinding" $ do
+    describe "with constants" $ do
+      it "is True when binding exists" $ do
+        hasBinding "x"  "x = 1" `shouldBe` True
+
+      it "is False when binding doesnt exists" $ do
+        hasBinding "y"  "x = 1" `shouldBe` False
+
+      it "is False when code is unparseable" $ do
+        hasBinding "y"  "7" `shouldBe` False
+
+    describe "with functions" $ do
+      it "is True when binding exists" $ do
+        hasBinding "x"  "x m = 1" `shouldBe` True
+
+      it "is False when binding doesnt exists" $ do
+        hasBinding "y"  "x m = 1" `shouldBe` False
+
   describe "composition analyzer" $ do
     describe "detects composition, constant assignment when" $ do
       it "is present" $ do
@@ -28,10 +53,6 @@ spec = do
       it "is not present" $ do
         hasComposition "f" "f x | c x = f x\n\
                            \    | otherwise = 4" `shouldBe` False
-
-  describe "parsing analyzer" $ do
-    it "detects parseable code" $ do
-        isParseable "x = 3" `shouldBe` True
 
   describe "guards analyzer" $ do
     describe "detects guards when" $ do
