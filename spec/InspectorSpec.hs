@@ -30,27 +30,50 @@ spec = do
       it "is False when binding doesnt exists" $ do
         hasBinding "y"  "x m = 1" `shouldBe` False
 
-  describe "composition analyzer" $ do
-    describe "detects composition, constant assignment when" $ do
-      it "is present" $ do
+  describe "hasComposition" $ do
+    describe "when constant assignment" $ do
+      it "is True when composition is present on top level" $ do
         hasComposition "x" "x = y . z" `shouldBe` True
-      it "is not present when" $ do
+
+      it "is True when composition is present inside lambda" $ do
+        hasComposition "x" "x = \\m -> y . z" `shouldBe` True
+
+      it "is True when composition is present inside application" $ do
+        hasComposition "x" "x = f (g.h) x" `shouldBe` True
+
+      it "is False when composition not present" $ do
         hasComposition "x" "x = 1" `shouldBe` False
 
-    describe "detects composition, unguarded function when" $ do
-      it "is present" $ do
+    describe "when unguarded function" $ do
+      it "is True when composition is present on top level" $ do
         hasComposition "f" "f x = (g . f) x" `shouldBe` True
-      it "is not present when" $ do
+
+      it "is True when composition is present within if" $ do
+        hasComposition "f" "f x = if True then (g . f) x else 5" `shouldBe` True
+
+      it "is True when composition is present within list" $ do
+        hasComposition "f" "f x = [(g.h x), m]" `shouldBe` True
+
+      it "is True when composition is present within comprehension" $ do
+        hasComposition "f" "f x = [ (g.h x) m | m <- [1..20]]" `shouldBe` True
+
+      it "is True when composition is present within where" $ do
+        hasComposition "f" "f x = m\n\
+                           \      where m = (f.g) " `shouldBe` True
+
+      it "is False when composition not present" $ do
         hasComposition "f" "f x = g x" `shouldBe` False
 
-    describe "detects composition, guarded function when" $ do
-      it "is present in result" $ do
+    describe "when guarded function " $ do
+      it "is True when composition is present on top level" $ do
         hasComposition "f" "f x | c x = g . f $ x\n\
                            \    | otherwise = 4" `shouldBe` True
-      it "is present in guard" $ do
+
+      it "is True when composition is present on guard" $ do
         hasComposition "f" "f x | (c . g) x = g x\n\
                            \    | otherwise = 4" `shouldBe` True
-      it "is not present" $ do
+
+      it "is False when composition not present" $ do
         hasComposition "f" "f x | c x = f x\n\
                            \    | otherwise = 4" `shouldBe` False
 
