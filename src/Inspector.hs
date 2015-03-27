@@ -25,7 +25,9 @@ hasGuards = testAnyWithBindingRhs f
         f _ = False
 
 hasLambda :: Inspection
-hasLambda _ _ = False
+hasLambda = testAnyWithBindingExpr f
+  where f (E (HsLambda _ _ _)) = True
+        f _ = False
 
 hasBinding :: Inspection
 hasBinding binding = isJust . findBindingRhs binding
