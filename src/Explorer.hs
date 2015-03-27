@@ -13,8 +13,12 @@ exploreEO' f (E (HsInfixApp a b c)) = exploreEO f [E a, O b, E c]
 exploreEO' f (E (HsApp a b))  = exploreEO f [E a, E b]
 exploreEO' f (E (HsNegApp a))  = exploreEO f [E a]
 exploreEO' f (E (HsLambda _ _ a)) = exploreEO f [E a]
-exploreEO' f (E (HsList a)) = exploreEO f $ map (E) a
+exploreEO' f (E (HsList as)) = exploreExprs f as
+exploreEO' f (E (HsListComp a _)) = exploreExprs f [a] --TODO
+exploreEO' f (E (HsTuple as))  = exploreExprs f as
+exploreEO' f (E (HsParen a)) = exploreExprs f [a]
+exploreEO' f (E (HsIf a b c)) = exploreExprs f [a, b, c]
 exploreEO' _ _ = False
 
 topExprs (HsUnGuardedRhs e) = [e]
-topExprs (HsGuardedRhss rhss) = concatMap (\(HsGuardedRhs _ es1 es2) -> [es1, es2]) rhss
+topExprs (HsGuardedRhss rhss) = rhss >>= \(HsGuardedRhs _ es1 es2) -> [es1, es2]

@@ -55,9 +55,11 @@ findBindingRhs binding = fmap rhsForBinding . join . withCode (find isBinding)
         isBindingInMatch _ = False
 
 rhsForBinding :: HsDecl -> [HsRhs]
-rhsForBinding (HsPatBind _ _ rhs _) = [rhs]
-rhsForBinding (HsFunBind cases) = map (\(HsMatch _ _ _ rhs _) -> rhs) cases
+rhsForBinding (HsPatBind _ _ rhs localDecls) = concatRhs rhs localDecls
+rhsForBinding (HsFunBind cases) = cases >>= \(HsMatch _ _ _ rhs localDecls) -> concatRhs rhs localDecls
 rhsForBinding _ = []
+
+concatRhs rhs l = [rhs] ++ concatMap rhsForBinding l
 
 testWithCode f =  orFalse . withCode f
 
