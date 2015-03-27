@@ -17,7 +17,7 @@ hasRecursion :: Inspection
 hasRecursion _ _ = False
 
 hasGuards :: Inspection
-hasGuards binding code = testWithBindingRhs binding code (any f)
+hasGuards = testAnyWithBindingRhs f
   where f (HsGuardedRhss _) = True
         f _ = False
 
@@ -28,15 +28,17 @@ hasBinding :: Inspection
 hasBinding binding = isJust . findBindingRhs binding
 
 isParseable :: Code -> Bool
-isParseable code  = testWithCode code (const True)
+isParseable = testWithCode (const True)
 
-testWithBindingRhs :: Binding -> Code -> ([HsRhs] -> Bool) -> Bool
-testWithBindingRhs binding code = orFalse . withBindingRhs binding code
+testAnyWithBindingRhs f = testWithBindingRhs (any f)
 
-withBindingRhs :: Binding -> Code -> ([HsRhs] -> a) -> Maybe a
-withBindingRhs binding code f = fmap f $ findBindingRhs binding code
+testWithBindingRhs :: ([HsRhs] -> Bool) -> Binding -> Code -> Bool
+testWithBindingRhs f binding  = orFalse . withBindingRhs f binding
 
-findBindingRhs binding code = fmap rhsForBinding $ join $ withCode code (find isBinding)
+withBindingRhs :: ([HsRhs] -> a) -> Binding -> Code -> Maybe a
+withBindingRhs f binding = fmap f . findBindingRhs binding
+
+findBindingRhs binding = fmap rhsForBinding . join . withCode (find isBinding)
   where isBinding (HsPatBind _ (HsPVar (HsIdent name))  _ _) = name == binding
         isBinding (HsFunBind cases)  = any isBindingInMatch cases
         isBinding _ = False
@@ -49,10 +51,10 @@ rhsForBinding (HsPatBind _ _ rhs _) = [rhs]
 rhsForBinding (HsFunBind cases) = map (\(HsMatch _ _ _ rhs _) -> rhs) cases
 rhsForBinding _ = []
 
-testWithCode code =  orFalse . withCode code
+testWithCode f =  orFalse . withCode f
 
-withCode :: Code -> ([HsDecl] -> a) -> Maybe a
-withCode code f | ParseOk (HsModule _ _ _ _ decls) <- parseModule code = Just (f decls)
+withCode :: ([HsDecl] -> a) -> Code -> Maybe a
+withCode f code | ParseOk (HsModule _ _ _ _ decls) <- parseModule code = Just (f decls)
                 | otherwise = Nothing
 
 
