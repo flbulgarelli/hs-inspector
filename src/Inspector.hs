@@ -12,10 +12,9 @@ type Code = String
 type Inspection = Binding -> Code  -> Bool
 
 hasComposition :: Inspection
-hasComposition = testAnyWithBindingRhs f
-  where f rhs = exploreExprs g $ topExprs rhs
-        g (O (HsQVarOp (UnQual (HsSymbol ".")))) = True
-        g _ = False
+hasComposition = testAnyWithBindingExpr f
+  where f (O (HsQVarOp (UnQual (HsSymbol ".")))) = True
+        f _ = False
 
 hasRecursion :: Inspection
 hasRecursion _ _ = False
@@ -33,6 +32,9 @@ hasBinding binding = isJust . findBindingRhs binding
 
 isParseable :: Code -> Bool
 isParseable = testWithCode (const True)
+
+testAnyWithBindingExpr f = testAnyWithBindingRhs testExprs
+  where testExprs rhs = exploreExprs f $ topExprs rhs
 
 testAnyWithBindingRhs f = testWithBindingRhs (any f)
 
