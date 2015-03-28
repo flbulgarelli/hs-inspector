@@ -1,4 +1,4 @@
-module Explorer where
+module Language.Haskell.Explorer where
 
 import Language.Haskell.Syntax
 

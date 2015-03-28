@@ -19,9 +19,8 @@ library
   hs-source-dirs:
       src
   exposed-modules:
-    Inspector
-    Expectations
-    Explorer
+    Language.Haskell.Inspector
+    Language.Haskell.Explorer
   build-depends:
     base                      >= 4     && < 5,
     haskell-src               >= 1     && < 1.1

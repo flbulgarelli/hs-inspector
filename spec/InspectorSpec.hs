@@ -1,7 +1,7 @@
 module InspectorSpec (spec) where
 
 import           Test.Hspec
-import           Inspector
+import           Language.Haskell.Inspector
 
 spec :: Spec
 spec = do
@@ -93,6 +93,4 @@ spec = do
 
       it "is present" $ do
         hasLambda "f" "f x = 4" `shouldBe` False
-
-
 

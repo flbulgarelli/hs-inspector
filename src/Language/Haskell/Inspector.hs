@@ -1,11 +1,11 @@
-module Inspector where
+module Language.Haskell.Inspector where
 
 import  Language.Haskell.Parser
 import  Language.Haskell.Syntax
 import  Data.Maybe (fromMaybe, isJust)
 import  Control.Monad (join)
 import  Data.List (find)
-import  Explorer
+import  Language.Haskell.Explorer
 
 type Binding = String
 type Code = String
@@ -15,9 +15,6 @@ hasComposition :: Inspection
 hasComposition = testAnyWithBindingExpr f
   where f (O (HsQVarOp (UnQual (HsSymbol ".")))) = True
         f _ = False
-
-hasRecursion :: Inspection
-hasRecursion _ _ = False
 
 hasGuards :: Inspection
 hasGuards = testAnyWithBindingRhs f
