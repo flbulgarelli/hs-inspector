@@ -26,6 +26,26 @@ hasLambda = testAnyWithBindingExpr f
   where f (E (HsLambda _ _ _)) = True
         f _ = False
 
+hasDirectRecursion :: Inspection
+hasDirectRecursion binding = hasUsage binding binding
+
+hasUsage :: String -> Inspection
+hasUsage target = testAnyWithBindingExpr f
+  where f (O (HsQVarOp name)) = isTarget name
+        f (E (HsVar    name)) = isTarget name
+        f _ = False
+
+        isTarget (Qual  _ (HsSymbol target)) = True
+        isTarget (Qual  _ (HsIdent  target)) = True
+        isTarget (UnQual  (HsSymbol target)) = True
+        isTarget (UnQual  (HsIdent  target)) = True
+        isTarget _                           = False
+
+hasComprehension :: Inspection
+hasComprehension = testAnyWithBindingExpr f
+  where f (E (HsListComp _ _)) = True
+        f _ = False
+
 hasBinding :: Inspection
 hasBinding binding = isJust . findBindingRhs binding
 

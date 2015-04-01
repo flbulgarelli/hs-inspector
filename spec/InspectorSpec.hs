@@ -30,6 +30,37 @@ spec = do
       it "is False when binding doesnt exists" $ do
         hasBinding "y"  "x m = 1" `shouldBe` False
 
+  describe "hasComprehension" $ do
+    it "is True when comprehension exists" $ do
+      hasComprehension "x"  "x = [m|m<-t]" `shouldBe` True
+
+    it "is False when comprehension doesnt exists" $ do
+      hasComprehension "y"  "x = []" `shouldBe` False
+
+  describe "hasUsage" $ do
+    it "is True when required function is used on application" $ do
+      hasUsage "m" "y"  "y x = m x" `shouldBe` True
+
+    it "is True when required function is used as argument" $ do
+      hasUsage "m" "y"  "y x = x m" `shouldBe` True
+
+    it "is True when required function is used as operator" $ do
+      hasUsage "&&" "y"  "y x = x && z" `shouldBe` True
+
+    it "is False when required function is not used" $ do
+      hasUsage "m" "y"  "y = 3" `shouldBe` False
+
+  describe "hasDirectRecursion" $ do
+    it "is True when has direct recursion in unguarded expresion" $ do
+      hasDirectRecursion "y"  "y x = y x" `shouldBe` True
+
+    it "is True when has direct recursion in guarded expresion" $ do
+      hasDirectRecursion "y"  "y x | c x = y m\n\
+                              \    | otherwise = 0" `shouldBe` True
+
+    it "is False when there is no recursion" $ do
+      hasDirectRecursion "y" "y = 3" `shouldBe` False
+
   describe "hasComposition" $ do
     describe "when constant assignment" $ do
       it "is True when composition is present on top level" $ do
