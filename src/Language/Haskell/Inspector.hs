@@ -11,24 +11,36 @@ type Binding = String
 type Code = String
 type Inspection = Binding -> Code  -> Bool
 
+-- | Inspection that tells whether a binding uses the composition operator '.'
+-- in its definition
 hasComposition :: Inspection
 hasComposition = testAnyWithBindingExpr f
   where f (O (HsQVarOp (UnQual (HsSymbol ".")))) = True
         f _ = False
 
+-- | Inspection that tells whether a binding uses guards
+-- in its definition
 hasGuards :: Inspection
 hasGuards = testAnyWithBindingRhs f
   where f (HsGuardedRhss _) = True
         f _ = False
 
+
+-- | Inspection that tells whether a binding uses a lambda expression
+-- in its definition
 hasLambda :: Inspection
 hasLambda = testAnyWithBindingExpr f
   where f (E (HsLambda _ _ _)) = True
         f _ = False
 
+
+-- | Inspection that tells whether a binding is direct recursive
 hasDirectRecursion :: Inspection
 hasDirectRecursion binding = hasUsage binding binding
 
+
+-- | Inspection that tells whether a binding uses the the given target binding
+-- in its definition
 hasUsage :: String -> Inspection
 hasUsage target = testAnyWithBindingExpr f
   where f (O (HsQVarOp name)) = isTarget name
@@ -41,11 +53,15 @@ hasUsage target = testAnyWithBindingExpr f
         isTarget (UnQual  (HsIdent  target)) = True
         isTarget _                           = False
 
+
+-- | Inspection that tells whether a binding uses lists comprehensions
+-- in its definition
 hasComprehension :: Inspection
 hasComprehension = testAnyWithBindingExpr f
   where f (E (HsListComp _ _)) = True
         f _ = False
 
+-- | Inspection that tells whether a top level binding exists
 hasBinding :: Inspection
 hasBinding binding = isJust . findBindingRhs binding
 
