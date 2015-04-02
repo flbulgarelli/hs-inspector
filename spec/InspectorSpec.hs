@@ -47,8 +47,18 @@ spec = do
     it "is True when required function is used as operator" $ do
       hasUsage "&&" "y"  "y x = x && z" `shouldBe` True
 
-    it "is False when required function is not used" $ do
+    it "is False when required function is not used in constant" $ do
       hasUsage "m" "y"  "y = 3" `shouldBe` False
+
+    it "is False when required function is not used in function" $ do
+      hasUsage "m" "y"  "y = x 3" `shouldBe` False
+
+    it "is False when binding is not present" $ do
+      hasUsage "m" "y"  "z = m 3" `shouldBe` False
+
+    it "is False when required function is blank" $ do
+      hasUsage "" "y"  "y = m 3" `shouldBe` False
+
 
   describe "hasDirectRecursion" $ do
     it "is True when has direct recursion in unguarded expresion" $ do

@@ -47,10 +47,10 @@ hasUsage target = testAnyWithBindingExpr f
         f (E (HsVar    name)) = isTarget name
         f _ = False
 
-        isTarget (Qual  _ (HsSymbol target)) = True
-        isTarget (Qual  _ (HsIdent  target)) = True
-        isTarget (UnQual  (HsSymbol target)) = True
-        isTarget (UnQual  (HsIdent  target)) = True
+        isTarget (Qual  _ (HsSymbol t)) = t == target
+        isTarget (Qual  _ (HsIdent  t)) = t == target
+        isTarget (UnQual  (HsSymbol t)) = t == target
+        isTarget (UnQual  (HsIdent  t)) = t == target
         isTarget _                           = False
 
 
