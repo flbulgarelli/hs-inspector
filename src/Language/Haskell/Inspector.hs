@@ -47,12 +47,12 @@ hasUsage target = testAnyWithBindingExpr f
         f (E (HsVar    name)) = isTarget name
         f _ = False
 
-        isTarget (Qual  _ (HsSymbol t)) = t == target
-        isTarget (Qual  _ (HsIdent  t)) = t == target
-        isTarget (UnQual  (HsSymbol t)) = t == target
-        isTarget (UnQual  (HsIdent  t)) = t == target
-        isTarget _                           = False
+        isTarget (Qual  _ n) = isTarget' n
+        isTarget (UnQual  n) = isTarget' n
+        isTarget _           = False
 
+        isTarget' (HsSymbol t) = t == target
+        isTarget' (HsIdent  t) = t == target
 
 -- | Inspection that tells whether a binding uses lists comprehensions
 -- in its definition
