@@ -14,21 +14,21 @@ type Inspection = Binding -> Code  -> Bool
 -- | Inspection that tells whether a binding uses the composition operator '.'
 -- in its definition
 hasComposition :: Inspection
-hasComposition = testAnyWithBindingExpr f
+hasComposition = isBindingEO f
   where f (O (HsQVarOp (UnQual (HsSymbol ".")))) = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses guards
 -- in its definition
 hasGuards :: Inspection
-hasGuards = testAnyWithBindingRhs f
+hasGuards = isBindingRhs f
   where f (HsGuardedRhss _) = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses ifs
 -- in its definition
 hasIf :: Inspection
-hasIf = testAnyWithBindingExpr f
+hasIf = isBindingEO f
   where f (E (HsIf _ _ _)) = True
         f _ = False
 
@@ -40,7 +40,7 @@ hasConditional target code = hasIf target code || hasGuards target code
 -- | Inspection that tells whether a binding uses a lambda expression
 -- in its definition
 hasLambda :: Inspection
-hasLambda = testAnyWithBindingExpr f
+hasLambda = isBindingEO f
   where f (E (HsLambda _ _ _)) = True
         f _ = False
 
@@ -52,7 +52,7 @@ hasDirectRecursion binding = hasUsage binding binding
 -- | Inspection that tells whether a binding uses the the given target binding
 -- in its definition
 hasUsage :: String -> Inspection
-hasUsage target = testAnyWithBindingExpr f
+hasUsage target = isBindingEO f
   where f (O (HsQVarOp name)) = isTarget name
         f (E (HsVar    name)) = isTarget name
         f _ = False
@@ -67,7 +67,7 @@ hasUsage target = testAnyWithBindingExpr f
 -- | Inspection that tells whether a binding uses lists comprehensions
 -- in its definition
 hasComprehension :: Inspection
-hasComprehension = testAnyWithBindingExpr f
+hasComprehension = isBindingEO f
   where f (E (HsListComp _ _)) = True
         f _ = False
 
@@ -78,10 +78,12 @@ hasBinding binding = isJust . findBindingRhs binding
 isParseable :: Code -> Bool
 isParseable = testWithCode (const True)
 
-testAnyWithBindingExpr f = testAnyWithBindingRhs testExprs
-  where testExprs rhs = exploreExprs f $ topExprs rhs
+-- ===================================================
 
-testAnyWithBindingRhs f = testWithBindingRhs (any f)
+isBindingEO f = isBindingRhs isExpr
+  where isExpr rhs = exploreExprs f $ topExprs rhs
+
+isBindingRhs f = testWithBindingRhs (any f)
 
 testWithBindingRhs :: ([HsRhs] -> Bool) -> Binding -> Code -> Bool
 testWithBindingRhs f binding  = orFalse . withBindingRhs f binding

@@ -5,14 +5,14 @@ import Language.Haskell.Syntax
 import Language.Haskell.Inspector
 
 hasRedundantBooleanComparison :: Inspection
-hasRedundantBooleanComparison = testAnyWithBindingExpr f
+hasRedundantBooleanComparison = isBindingEO f
   where f (E (HsInfixApp x (HsQVarOp (UnQual (HsSymbol c))) y)) = any isBooleanLiteral [x, y] && isComp c
         f _ = False
 
         isComp c = c == "==" || c == "/="
 
 hasRedundantIf :: Inspection
-hasRedundantIf = testAnyWithBindingExpr f
+hasRedundantIf = isBindingEO f
   where f (E (HsIf _ x y)) = all isBooleanLiteral [x, y]
         f _            = False
 
