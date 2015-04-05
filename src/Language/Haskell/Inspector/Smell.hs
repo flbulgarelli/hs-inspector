@@ -16,6 +16,11 @@ hasRedundantIf = isBindingEO f
   where f (E (HsIf _ x y)) = all isBooleanLiteral [x, y]
         f _            = False
 
+hasRedundantLambda :: Inspection
+hasRedundantLambda = isBindingEO f
+  where f (E (HsLambda _ [HsPVar (HsIdent x)] (HsApp _ (HsVar (UnQual (HsIdent y)))))) = x == y
+        f _ = False -- TODO consider parenthesis and symbols
+
 isBooleanLiteral (HsCon (UnQual (HsIdent "True")))  = True
 isBooleanLiteral (HsCon (UnQual (HsIdent "False"))) = True
 isBooleanLiteral _                                  = False
