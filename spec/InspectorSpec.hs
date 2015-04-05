@@ -118,7 +118,7 @@ spec = do
         hasComposition "f" "f x | c x = f x\n\
                            \    | otherwise = 4" `shouldBe` False
 
-  describe "guards analyzer" $ do
+  describe "hasGuards" $ do
     describe "detects guards when" $ do
       it "is present" $ do
         hasGuards "f" "f x | c x = 2\n\
@@ -126,6 +126,14 @@ spec = do
 
       it "is present" $ do
         hasGuards "f" "f x = c x = 2"  `shouldBe` False
+
+  describe "hasIf" $ do
+    it "is True when present" $ do
+      hasIf "f" "f x = if c x then 2 else 3"  `shouldBe` True
+
+    it "is False when not present" $ do
+      hasIf "f" "f x = x"  `shouldBe` False
+
 
   describe "lambda analyzer" $ do
     describe "detects lambdas when" $ do

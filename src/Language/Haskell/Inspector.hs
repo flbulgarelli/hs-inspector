@@ -25,6 +25,17 @@ hasGuards = testAnyWithBindingRhs f
   where f (HsGuardedRhss _) = True
         f _ = False
 
+-- | Inspection that tells whether a binding uses ifs
+-- in its definition
+hasIf :: Inspection
+hasIf = testAnyWithBindingExpr f
+  where f (E (HsIf _ _ _)) = True
+        f _ = False
+
+-- | Inspection that tells whether a binding uses ifs or guards
+-- in its definition
+hasConditional :: Inspection
+hasConditional target code = hasIf target code || hasGuards target code
 
 -- | Inspection that tells whether a binding uses a lambda expression
 -- in its definition
@@ -37,7 +48,6 @@ hasLambda = testAnyWithBindingExpr f
 -- | Inspection that tells whether a binding is direct recursive
 hasDirectRecursion :: Inspection
 hasDirectRecursion binding = hasUsage binding binding
-
 
 -- | Inspection that tells whether a binding uses the the given target binding
 -- in its definition
