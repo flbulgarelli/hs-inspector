@@ -16,6 +16,14 @@ hasRedundantIf = isBindingEO f
   where f (E (HsIf _ x y)) = all isBooleanLiteral [x, y]
         f _            = False
 
+
+hasRedundantGuards :: Inspection
+hasRedundantGuards = isBindingRhs f -- TODO not true when condition is a pattern
+  where f (HsGuardedRhss [
+            HsGuardedRhs _ _ x,
+            HsGuardedRhs _ (HsVar (UnQual (HsIdent "otherwise"))) y]) = all isBooleanLiteral [x, y]
+        f _ = False
+
 hasRedundantLambda :: Inspection
 hasRedundantLambda = isBindingEO f
   where f (E (HsLambda _ [HsPVar (HsIdent x)] (HsApp _ (HsVar (UnQual (HsIdent y)))))) = x == y

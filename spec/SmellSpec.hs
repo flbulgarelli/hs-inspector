@@ -24,6 +24,18 @@ spec = do
     it "is False when there is no if" $ do
       hasRedundantIf "x" "x = False" `shouldBe` False
 
+  describe "hasRedundantGuards" $ do
+    it "is True when present and both branches are boolean literals" $ do
+      hasRedundantGuards "f" "f x | c x = True\n\
+                            \    | otherwise = False" `shouldBe` True
+
+    it "is False when present but branches do not answers booleans" $ do
+      hasRedundantGuards "f" "f x | c x = 2\n\
+                             \    | otherwise = 3" `shouldBe` False
+
+    it "is False when there is no guard" $ do
+      hasRedundantGuards "x" "x = False" `shouldBe` False
+
   describe "hasRedundantBooleanComparison" $ do
     it "is True when comparing a literal in an if" $ do
       hasRedundantBooleanComparison "x" "x = if m == True then 1 else 2" `shouldBe` True
