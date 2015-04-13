@@ -57,12 +57,9 @@ hasUsage target = isBindingEO f
         f (E (HsVar    name)) = isTarget name
         f _ = False
 
-        isTarget (Qual  _ n) = isTarget' n
-        isTarget (UnQual  n) = isTarget' n
+        isTarget (Qual  _ n) = isName target n
+        isTarget (UnQual  n) = isName target n
         isTarget _           = False
-
-        isTarget' (HsSymbol t) = t == target
-        isTarget' (HsIdent  t) = t == target
 
 -- | Inspection that tells whether a binding uses lists comprehensions
 -- in its definition
@@ -75,10 +72,26 @@ hasComprehension = isBindingEO f
 hasBinding :: Inspection
 hasBinding binding = isJust . findBindingRhs binding
 
+hasTypeDeclaration :: Inspection
+hasTypeDeclaration binding = testWithCode (any f)
+  where f (HsTypeDecl _ hsName _ _) = isName binding hsName
+        f _                         = False
+
+hasTypeSignature :: Inspection
+hasTypeSignature binding = testWithCode (any f)
+  where f (HsTypeSig _ [hsName] _)  = isName binding hsName
+        f _                         = False
+
+
 isParseable :: Code -> Bool
 isParseable = testWithCode (const True)
 
 -- ===================================================
+
+isName name hsName = nameOf hsName == name
+
+nameOf (HsSymbol n) = n
+nameOf (HsIdent  n) = n
 
 isBindingEO f = isBindingRhs isExpr
   where isExpr rhs = exploreExprs f $ topExprs rhs

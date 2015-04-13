@@ -12,6 +12,14 @@ spec = do
     it "detects unparseable code" $ do
       isParseable "3" `shouldBe` False
 
+  describe "hasTypeSignature" $ do
+    it "is True whn type signature is present" $ do
+      hasTypeSignature "x" "x :: Int\n\
+                           \x = 3" `shouldBe` True
+
+    it "is False whn type signature is absent " $ do
+      hasTypeSignature "x" "x = 2" `shouldBe` False
+
   describe "hasBinding" $ do
     describe "with constants" $ do
       it "is True when binding exists" $ do
