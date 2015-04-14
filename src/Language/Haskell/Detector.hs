@@ -1,6 +1,7 @@
-module Detector (detect) where
+module Language.Haskell.Detector (detect) where
 
 import Language.Haskell.Inspector
+import Language.Haskell.Syntax
 
 bindingsOf :: Code -> [String]
 bindingsOf = orNil . withCode (concatMap bindings)
