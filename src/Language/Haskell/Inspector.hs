@@ -85,6 +85,9 @@ hasTypeSignature binding = testWithCode (any f)
 isParseable :: Code -> Bool
 isParseable = testWithCode (const True)
 
+negateInspection :: Inspection -> Inspection
+negateInspection f code = not . f code
+
 -- ===================================================
 
 isName name hsName = nameOf hsName == name
