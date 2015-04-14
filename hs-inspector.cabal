@@ -2,7 +2,7 @@
 --  http://haskell.org/cabal/users-guide/
 
 name:                hs-inspector
-version:             0.3.0.0
+version:             0.4.0.0
 license:             MIT
 license-file:        LICENSE
 author:              Franco Leonardo Bulgarelli
