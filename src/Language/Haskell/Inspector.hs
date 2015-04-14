@@ -93,6 +93,8 @@ isName name hsName = nameOf hsName == name
 nameOf (HsSymbol n) = n
 nameOf (HsIdent  n) = n
 
+bindingInMatch (HsMatch _ n _ _ _) = nameOf n
+
 isBindingEO f = isBindingRhs isExpr
   where isExpr rhs = exploreExprs f $ topExprs rhs
 
@@ -105,12 +107,9 @@ withBindingRhs :: ([HsRhs] -> a) -> Binding -> Code -> Maybe a
 withBindingRhs f binding = fmap f . findBindingRhs binding
 
 findBindingRhs binding = fmap rhsForBinding . join . withCode (find isBinding)
-  where isBinding (HsPatBind _ (HsPVar (HsIdent name))  _ _) = name == binding
-        isBinding (HsFunBind cases)  = any isBindingInMatch cases
+  where isBinding (HsPatBind _ (HsPVar n)  _ _) = nameOf n == binding
+        isBinding (HsFunBind cases)  = any ((== binding).bindingInMatch) cases
         isBinding _ = False
-
-        isBindingInMatch (HsMatch _ (HsIdent name) _ _ _ ) = name == binding
-        isBindingInMatch _ = False
 
 rhsForBinding :: HsDecl -> [HsRhs]
 rhsForBinding (HsPatBind _ _ rhs localDecls) = concatRhs rhs localDecls
