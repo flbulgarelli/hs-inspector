@@ -82,7 +82,6 @@ hasTypeSignature binding = testWithCode (any f)
   where f (HsTypeSig _ [hsName] _)  = isName binding hsName
         f _                         = False
 
-
 isParseable :: Code -> Bool
 isParseable = testWithCode (const True)
 
@@ -125,4 +124,5 @@ withCode f code | ParseOk (HsModule _ _ _ _ decls) <- parseModule code = Just (f
                 | otherwise = Nothing
 
 orFalse = fromMaybe False
+orNil = fromMaybe []
 

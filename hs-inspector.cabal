@@ -21,9 +21,10 @@ library
   hs-source-dirs:
       src
   exposed-modules:
-    Language.Haskell.Inspector.Smell
     Language.Haskell.Explorer
+    Language.Haskell.Detector
     Language.Haskell.Inspector
+    Language.Haskell.Inspector.Smell
   build-depends:
     base                      >= 4     && < 5,
     haskell-src               >= 1     && < 1.1
