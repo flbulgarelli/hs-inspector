@@ -1,4 +1,8 @@
-module Language.Haskell.Inspector.Smell where
+module Language.Haskell.Inspector.Smell (
+  hasRedundantBooleanComparison,
+  hasRedundantIf,
+  hasRedundantGuards,
+  hasRedundantLambda) where
 
 import Language.Haskell.Explorer
 import Language.Haskell.Syntax
