@@ -15,6 +15,6 @@ negative f code = not . f code
 
 transitive :: Inspection -> Inspection
 transitive inspection binding code = inspection binding code || inUsage
-  where inUsage = any (`inspection` code) $ do
+  where inUsage = any (flip (transitive inspection) code) $ do
                       expr <- expressionsOf binding code
                       maybeToList . expressionToBinding $ expr
