@@ -83,7 +83,7 @@ hasTypeSignature binding = testWithCode (any f)
         f _                         = False
 
 isParseable :: Code -> Bool
-isParseable = testWithCode (const True)
+isParseable = not.null.parseDecls
 
 negateInspection :: Inspection -> Inspection
 negateInspection f code = not . f code
@@ -105,11 +105,7 @@ isBindingRhs f = testWithBindingRhs (any f)
 testWithBindingRhs :: ([HsRhs] -> Bool) -> Binding -> Code -> Bool
 testWithBindingRhs f binding  = f . rhssOf binding
 
-testWithCode f =  orFalse . withCode f
-
-withCode :: ([HsDecl] -> a) -> Code -> Maybe a
-withCode f code | ParseOk (HsModule _ _ _ _ decls) <- parseModule code = Just (f decls)
-                | otherwise = Nothing
+testWithCode f =  f . parseDecls
 
 -- Utils
 
