@@ -92,18 +92,65 @@ negateInspection f code = not . f code
 transitive :: Inspection -> Inspection
 transitive = id
 
-
 -- ===================================================
 
+-- Language.Haskell.Names
+
+isName :: String -> HsName -> Bool
 isName name hsName = nameOf hsName == name
 
+nameOf :: HsName -> String
 nameOf (HsSymbol n) = n
 nameOf (HsIdent  n) = n
 
+-- Language.Haskell.Expressions
+
+isBindingEO :: (EO -> Bool) -> Inspection
+isBindingEO f binding = any f . expressionsOf binding
+
+expressionsOf :: Binding -> Code -> [EO]
+expressionsOf binding code = do
+  rhs <- rhssOf binding code
+  top <- topExpressionsOf rhs
+  unfoldExpression top
+
+topExpressionsOf :: HsRhs -> [EO]
+topExpressionsOf (HsUnGuardedRhs e) = [E e]
+topExpressionsOf (HsGuardedRhss rhss) = rhss >>= \(HsGuardedRhs _ es1 es2) -> [E es1, E es2]
+
+unfoldExpression :: EO -> [EO]
+unfoldExpression expr = expr : concatMap unfoldExpression (subExpressions expr)
+
+subExpressions :: EO -> [EO]
+subExpressions (E (HsInfixApp a b c)) = [E a, O b, E c]
+subExpressions (E (HsApp a b))        = [E a, E b]
+subExpressions (E (HsNegApp a))       = [E a]
+subExpressions (E (HsLambda _ _ a))   = [E a]
+subExpressions (E (HsList as))        = map (E) as
+subExpressions (E (HsListComp a _))   = [E a] --TODO
+subExpressions (E (HsTuple as))       = map (E) as
+subExpressions (E (HsParen a))        = [E a]
+subExpressions (E (HsIf a b c))       = [E a, E b, E c]
+subExpressions _ = []
+
+
+rhssOf :: Binding -> Code -> [HsRhs]
+rhssOf binding = concatMap rhsForBinding .filter (isBinding binding). orNil . declsOf
+
+declsOf :: Code -> Maybe [HsDecl]
+declsOf code
+  | ParseOk (HsModule _ _ _ _ decls) <- parseModule code = Just decls
+  | otherwise = Nothing
+
+isBinding :: Binding -> HsDecl -> Bool
+isBinding binding (HsPatBind _ (HsPVar n)  _ _) = isName binding n
+isBinding binding (HsFunBind cases)  = isNameInCases cases
+      where isNameInCases = any (isName binding) . map (\(HsMatch _ n _ _ _) -> n)
+
+-- legacy
+
 bindingInMatch (HsMatch _ n _ _ _) = nameOf n
 
-isBindingEO f = isBindingRhs isExpr
-  where isExpr rhs = exploreExprs f $ topExprs rhs
 
 isBindingRhs f = testWithBindingRhs (any f)
 
@@ -130,6 +177,8 @@ testWithCode f =  orFalse . withCode f
 withCode :: ([HsDecl] -> a) -> Code -> Maybe a
 withCode f code | ParseOk (HsModule _ _ _ _ decls) <- parseModule code = Just (f decls)
                 | otherwise = Nothing
+
+-- Utils
 
 orFalse = fromMaybe False
 orNil = fromMaybe []
