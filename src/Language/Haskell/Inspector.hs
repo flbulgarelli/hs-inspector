@@ -88,6 +88,11 @@ isParseable = testWithCode (const True)
 negateInspection :: Inspection -> Inspection
 negateInspection f code = not . f code
 
+
+transitive :: Inspection -> Inspection
+transitive = id
+
+
 -- ===================================================
 
 isName name hsName = nameOf hsName == name

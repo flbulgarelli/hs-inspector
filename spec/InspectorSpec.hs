@@ -153,10 +153,10 @@ spec = do
 
   describe "transitive" $ do
     it "is True when inspection can be proven transitively to be True" $ do
-      transitive (hasIf "f") "f x = g x\n\
+      transitive hasIf "f" "f x = g x\n\
                               \g x = if c x then 2 else 3"  `shouldBe` True
     it "is False when inspection can not be proven transitively to be True" $ do
-      transitive (hasIf "f") "f x = g x"  `shouldBe` False
+      transitive hasIf "f" "f x = g x"  `shouldBe` False
 
     it "is False when inspection can be proven transitively to be False" $ do
-      transitive (hasIf "f") "f x = g x"  `shouldBe` False
+      transitive hasIf "f" "f x = g x"  `shouldBe` False
