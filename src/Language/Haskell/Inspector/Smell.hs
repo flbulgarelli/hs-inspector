@@ -9,14 +9,14 @@ import Language.Haskell.Syntax
 import Language.Haskell.Inspector
 
 hasRedundantBooleanComparison :: Inspection
-hasRedundantBooleanComparison = isBindingEO f
+hasRedundantBooleanComparison = hasExpression f
   where f (E (HsInfixApp x (HsQVarOp (UnQual (HsSymbol c))) y)) = any isBooleanLiteral [x, y] && isComp c
         f _ = False
 
         isComp c = c == "==" || c == "/="
 
 hasRedundantIf :: Inspection
-hasRedundantIf = isBindingEO f
+hasRedundantIf = hasExpression f
   where f (E (HsIf _ x y)) = all isBooleanLiteral [x, y]
         f _            = False
 
@@ -29,7 +29,7 @@ hasRedundantGuards = isBindingRhs f -- TODO not true when condition is a pattern
         f _ = False
 
 hasRedundantLambda :: Inspection
-hasRedundantLambda = isBindingEO f
+hasRedundantLambda = hasExpression f
   where f (E (HsLambda _ [HsPVar (HsIdent x)] (HsApp _ (HsVar (UnQual (HsIdent y)))))) = x == y
         f _ = False -- TODO consider parenthesis and symbols
 

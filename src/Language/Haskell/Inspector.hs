@@ -14,7 +14,7 @@ type Inspection = Binding -> Code  -> Bool
 -- | Inspection that tells whether a binding uses the composition operator '.'
 -- in its definition
 hasComposition :: Inspection
-hasComposition = isBindingEO f
+hasComposition = hasExpression f
   where f (O (HsQVarOp (UnQual (HsSymbol ".")))) = True
         f _ = False
 
@@ -28,7 +28,7 @@ hasGuards = isBindingRhs f
 -- | Inspection that tells whether a binding uses ifs
 -- in its definition
 hasIf :: Inspection
-hasIf = isBindingEO f
+hasIf = hasExpression f
   where f (E (HsIf _ _ _)) = True
         f _ = False
 
@@ -40,7 +40,7 @@ hasConditional target code = hasIf target code || hasGuards target code
 -- | Inspection that tells whether a binding uses a lambda expression
 -- in its definition
 hasLambda :: Inspection
-hasLambda = isBindingEO f
+hasLambda = hasExpression f
   where f (E (HsLambda _ _ _)) = True
         f _ = False
 
@@ -52,7 +52,7 @@ hasDirectRecursion binding = hasUsage binding binding
 -- | Inspection that tells whether a binding uses the the given target binding
 -- in its definition
 hasUsage :: String -> Inspection
-hasUsage target = isBindingEO f
+hasUsage target = hasExpression f
   where f (O (HsQVarOp name)) = isTarget name
         f (E (HsVar    name)) = isTarget name
         f _ = False
@@ -64,7 +64,7 @@ hasUsage target = isBindingEO f
 -- | Inspection that tells whether a binding uses lists comprehensions
 -- in its definition
 hasComprehension :: Inspection
-hasComprehension = isBindingEO f
+hasComprehension = hasExpression f
   where f (E (HsListComp _ _)) = True
         f _ = False
 
@@ -73,12 +73,12 @@ hasBinding :: Inspection
 hasBinding binding = not.null.rhssOf binding
 
 hasTypeDeclaration :: Inspection
-hasTypeDeclaration binding = testWithCode (any f)
+hasTypeDeclaration binding = hasDecl f
   where f (HsTypeDecl _ hsName _ _) = isName binding hsName
         f _                         = False
 
 hasTypeSignature :: Inspection
-hasTypeSignature binding = testWithCode (any f)
+hasTypeSignature binding = hasDecl f
   where f (HsTypeSig _ [hsName] _)  = isName binding hsName
         f _                         = False
 
@@ -94,8 +94,11 @@ transitive = id
 
 -- ===================================================
 
-isBindingEO :: (EO -> Bool) -> Inspection
-isBindingEO f binding = any f . expressionsOf binding
+hasExpression :: (EO -> Bool) -> Inspection
+hasExpression f binding = any f . expressionsOf binding
+
+hasDecl :: (HsDecl -> Bool) -> Code -> Bool
+hasDecl f = any f . parseDecls
 
 bindingInMatch (HsMatch _ n _ _ _) = nameOf n
 
