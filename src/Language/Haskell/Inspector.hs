@@ -97,18 +97,13 @@ transitive = id
 isBindingEO :: (EO -> Bool) -> Inspection
 isBindingEO f binding = any f . expressionsOf binding
 
--- legacy
-
 bindingInMatch (HsMatch _ n _ _ _) = nameOf n
 
 
 isBindingRhs f = testWithBindingRhs (any f)
 
 testWithBindingRhs :: ([HsRhs] -> Bool) -> Binding -> Code -> Bool
-testWithBindingRhs f binding  = withBindingRhs f binding
-
-withBindingRhs :: ([HsRhs] -> a) -> Binding -> Code -> a
-withBindingRhs f binding = f . rhssOf binding
+testWithBindingRhs f binding  = f . rhssOf binding
 
 testWithCode f =  orFalse . withCode f
 
