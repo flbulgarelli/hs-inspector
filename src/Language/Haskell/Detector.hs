@@ -2,6 +2,7 @@ module Language.Haskell.Detector (detect) where
 
 import Language.Haskell.Inspector
 import Language.Haskell.Syntax
+import Language.Haskell.Names
 
 bindingsOf :: Code -> [String]
 bindingsOf = orNil . withCode (concatMap bindings)

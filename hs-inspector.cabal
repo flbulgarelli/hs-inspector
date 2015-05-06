@@ -21,6 +21,7 @@ library
   hs-source-dirs:
       src
   exposed-modules:
+    Language.Haskell.Names
     Language.Haskell.Explorer
     Language.Haskell.Detector
     Language.Haskell.Inspector

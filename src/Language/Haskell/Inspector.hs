@@ -2,6 +2,7 @@ module Language.Haskell.Inspector where
 
 import  Language.Haskell.Parser
 import  Language.Haskell.Syntax
+import  Language.Haskell.Names
 import  Data.Maybe (fromMaybe, isJust)
 import  Control.Monad (join)
 import  Data.List (find)
@@ -94,14 +95,6 @@ transitive = id
 
 -- ===================================================
 
--- Language.Haskell.Names
-
-isName :: String -> HsName -> Bool
-isName name hsName = nameOf hsName == name
-
-nameOf :: HsName -> String
-nameOf (HsSymbol n) = n
-nameOf (HsIdent  n) = n
 
 -- Language.Haskell.Expressions
 
