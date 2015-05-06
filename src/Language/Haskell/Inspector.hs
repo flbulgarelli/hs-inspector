@@ -1,4 +1,23 @@
-module Language.Haskell.Inspector where
+module Language.Haskell.Inspector (
+  hasComposition,
+  hasGuards,
+  hasIf,
+  hasConditional,
+  hasLambda,
+  hasDirectRecursion,
+  hasUsage,
+  hasComprehension,
+  hasBinding,
+  hasTypeDeclaration,
+  hasTypeSignature,
+  hasExpression,
+  hasDecl,
+  hasRhs,
+  isParseable,
+  transitive,
+  Inspection,
+  GlobalInspection
+  ) where
 
 import  Language.Haskell.Parser
 import  Language.Haskell.Syntax
@@ -22,7 +41,7 @@ hasComposition = hasExpression f
 -- | Inspection that tells whether a binding uses guards
 -- in its definition
 hasGuards :: Inspection
-hasGuards = isBindingRhs f
+hasGuards = hasRhs f
   where f (HsGuardedRhss _) = True
         f _ = False
 
@@ -90,19 +109,20 @@ transitive :: Inspection -> Inspection
 transitive = id
 
 hasExpression :: (EO -> Bool) -> Inspection
-hasExpression f binding = any f . expressionsOf binding
+hasExpression f binding = has f (expressionsOf binding)
+
+hasRhs :: (HsRhs -> Bool)-> Inspection
+hasRhs f binding = has f (rhssOf binding)
 
 isParseable :: GlobalInspection
 isParseable = not.null.parseDecls
 
 hasDecl :: (HsDecl -> Bool) -> GlobalInspection
-hasDecl f = any f . parseDecls
+hasDecl f = has f parseDecls
 
+has f g = any f . g
 
 -- ===================================================
-
-
-bindingInMatch (HsMatch _ n _ _ _) = nameOf n
 
 
 isBindingRhs f = testWithBindingRhs (any f)

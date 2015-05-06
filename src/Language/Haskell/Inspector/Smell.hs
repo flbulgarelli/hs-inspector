@@ -22,7 +22,7 @@ hasRedundantIf = hasExpression f
 
 
 hasRedundantGuards :: Inspection
-hasRedundantGuards = isBindingRhs f -- TODO not true when condition is a pattern
+hasRedundantGuards = hasRhs f -- TODO not true when condition is a pattern
   where f (HsGuardedRhss [
             HsGuardedRhs _ _ x,
             HsGuardedRhs _ (HsVar (UnQual (HsIdent "otherwise"))) y]) = all isBooleanLiteral [x, y]

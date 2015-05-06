@@ -58,9 +58,7 @@ subExpressions (E (HsIf a b c))       = [E a, E b, E c]
 subExpressions _ = []
 
 isBinding :: Binding -> HsDecl -> Bool
-isBinding binding (HsPatBind _ (HsPVar n)  _ _) = isName binding n
-isBinding binding (HsFunBind cases)  = isNameInCases cases
-      where isNameInCases = any (isName binding) . map (\(HsMatch _ n _ _ _) -> n)
+isBinding binding = (==binding).declName
 
 rhsForBinding :: HsDecl -> [HsRhs]
 rhsForBinding (HsPatBind _ _ rhs localDecls) = concatRhs rhs localDecls
@@ -71,3 +69,4 @@ concatRhs rhs l = [rhs] ++ concatMap rhsForBinding l
 
 
 orNil = fromMaybe []
+

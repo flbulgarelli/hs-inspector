@@ -11,11 +11,5 @@ detect inspection code = filter (`inspection` code) $ parseBindings code
 -- private
 
 parseBindings :: Code -> [Binding]
-parseBindings = concatMap bindings . parseDecls
-  where
-  bindings (HsTypeSig _ [b] _) = [nameOf b]
-  bindings (HsTypeDecl _ b _ _) = [nameOf b]
-  bindings (HsPatBind _ (HsPVar n) _ _) = [nameOf n]
-  bindings (HsFunBind cases)  = map bindingInMatch cases
-  bindings _                  = []
+parseBindings = map declName . parseDecls
 
