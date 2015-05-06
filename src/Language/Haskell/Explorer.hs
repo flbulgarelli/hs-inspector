@@ -4,6 +4,7 @@ import Language.Haskell.Syntax
 
 data EO = E HsExp | O HsQOp
 
+exploreExprs :: (EO -> Bool) -> [HsExp] -> Bool
 exploreExprs f exprs = exploreEO f $ map (E) exprs
 
 exploreEO f es = any f es || any (exploreEO' f) es
