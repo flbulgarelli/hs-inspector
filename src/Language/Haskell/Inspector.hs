@@ -19,14 +19,9 @@ module Language.Haskell.Inspector (
   GlobalInspection
   ) where
 
-import  Language.Haskell.Parser
 import  Language.Haskell.Syntax
-import  Language.Haskell.Names
+import  Language.Haskell.Names (isName)
 import  Language.Haskell.Explorer
-
-import  Data.Maybe (fromMaybe, isJust)
-import  Control.Monad (join)
-import  Data.List (find)
 
 type Inspection = Binding -> Code  -> Bool
 type GlobalInspection = Code  -> Bool
@@ -120,20 +115,10 @@ isParseable = not.null.parseDecls
 hasDecl :: (HsDecl -> Bool) -> GlobalInspection
 hasDecl f = has f parseDecls
 
+
+-- private
+
 has f g = any f . g
 
--- ===================================================
-
-
-isBindingRhs f = testWithBindingRhs (any f)
-
-testWithBindingRhs :: ([HsRhs] -> Bool) -> Binding -> Code -> Bool
-testWithBindingRhs f binding  = f . rhssOf binding
-
-testWithCode f =  f . parseDecls
-
--- Utils
-
-orFalse = fromMaybe False
 
 
