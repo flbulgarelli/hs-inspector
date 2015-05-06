@@ -3,9 +3,10 @@ module Language.Haskell.Detector (detect) where
 import Language.Haskell.Inspector
 import Language.Haskell.Syntax
 import Language.Haskell.Names
+import Language.Haskell.Explorer
 
-bindingsOf :: Code -> [String]
-bindingsOf = orNil . withCode (concatMap bindings)
+bindingsOf :: Code -> [Binding]
+bindingsOf = concatMap bindings . parseDecls
   where
   bindings (HsTypeSig _ [b] _) = [nameOf b]
   bindings (HsTypeDecl _ b _ _) = [nameOf b]
