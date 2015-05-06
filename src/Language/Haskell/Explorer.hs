@@ -4,6 +4,7 @@ module Language.Haskell.Explorer (
   declsOf,
   rhssOf,
   expressionsOf,
+  expressionToBinding,
   EO(..),
   Binding,
   Code) where
@@ -39,6 +40,11 @@ parseDecls code
 
 parseBindings :: Code -> [Binding]
 parseBindings = map declName . parseDecls
+
+expressionToBinding :: EO -> Maybe Binding
+expressionToBinding (O (HsQVarOp q)) = qName q
+expressionToBinding (E (HsVar    q)) = qName q
+expressionToBinding _                = Nothing
 
 -- private
 

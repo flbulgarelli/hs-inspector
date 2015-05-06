@@ -67,13 +67,8 @@ hasDirectRecursion binding = hasUsage binding binding
 -- in its definition
 hasUsage :: String -> Inspection
 hasUsage target = hasExpression f
-  where f (O (HsQVarOp name)) = isTarget name
-        f (E (HsVar    name)) = isTarget name
-        f _ = False
-
-        isTarget (Qual  _ n) = isName target n
-        isTarget (UnQual  n) = isName target n
-        isTarget _           = False
+  where f expr | (Just n) <- expressionToBinding expr = n == target
+               | otherwise = False
 
 -- | Inspection that tells whether a binding uses lists comprehensions
 -- in its definition
