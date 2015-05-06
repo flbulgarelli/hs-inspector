@@ -14,7 +14,6 @@ module Language.Haskell.Inspector (
   hasDecl,
   hasRhs,
   isParseable,
-  transitive,
   Inspection,
   GlobalInspection
   ) where
@@ -96,12 +95,6 @@ hasTypeSignature :: Inspection
 hasTypeSignature binding = hasDecl f
   where f (HsTypeSig _ [hsName] _)  = isName binding hsName
         f _                         = False
-
-negateInspection :: Inspection -> Inspection
-negateInspection f code = not . f code
-
-transitive :: Inspection -> Inspection
-transitive = id
 
 hasExpression :: (EO -> Bool) -> Inspection
 hasExpression f binding = has f (expressionsOf binding)

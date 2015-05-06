@@ -1,5 +1,6 @@
 module Language.Haskell.Explorer (
   parseDecls,
+  parseBindings,
   declsOf,
   rhssOf,
   expressionsOf,
@@ -10,7 +11,6 @@ module Language.Haskell.Explorer (
 import Language.Haskell.Syntax
 import Language.Haskell.Names
 import Language.Haskell.Parser
-import Data.Maybe (fromMaybe, isJust)
 
 type Binding = String
 type Code = String
@@ -18,6 +18,7 @@ type Code = String
 data EO = E HsExp | O HsQOp
 
 -- xxxOf functions: take a binding and code
+-- parseXxx functions: take just code
 
 declsOf :: Binding -> Code -> [HsDecl]
 declsOf binding = filter (isBinding binding) . parseDecls
@@ -35,6 +36,9 @@ parseDecls :: Code -> [HsDecl]
 parseDecls code
   | ParseOk (HsModule _ _ _ _ decls) <- parseModule code = decls
   | otherwise = []
+
+parseBindings :: Code -> [Binding]
+parseBindings = map declName . parseDecls
 
 -- private
 
@@ -66,7 +70,4 @@ rhsForBinding (HsFunBind cases) = cases >>= \(HsMatch _ _ _ rhs localDecls) -> c
 rhsForBinding _ = []
 
 concatRhs rhs l = [rhs] ++ concatMap rhsForBinding l
-
-
-orNil = fromMaybe []
 
