@@ -10,6 +10,7 @@ import  Control.Monad (join)
 import  Data.List (find)
 
 type Inspection = Binding -> Code  -> Bool
+type GlobalInspection = Code  -> Bool
 
 -- | Inspection that tells whether a binding uses the composition operator '.'
 -- in its definition
@@ -82,23 +83,24 @@ hasTypeSignature binding = hasDecl f
   where f (HsTypeSig _ [hsName] _)  = isName binding hsName
         f _                         = False
 
-isParseable :: Code -> Bool
-isParseable = not.null.parseDecls
-
 negateInspection :: Inspection -> Inspection
 negateInspection f code = not . f code
-
 
 transitive :: Inspection -> Inspection
 transitive = id
 
--- ===================================================
-
 hasExpression :: (EO -> Bool) -> Inspection
 hasExpression f binding = any f . expressionsOf binding
 
-hasDecl :: (HsDecl -> Bool) -> Code -> Bool
+isParseable :: GlobalInspection
+isParseable = not.null.parseDecls
+
+hasDecl :: (HsDecl -> Bool) -> GlobalInspection
 hasDecl f = any f . parseDecls
+
+
+-- ===================================================
+
 
 bindingInMatch (HsMatch _ n _ _ _) = nameOf n
 
