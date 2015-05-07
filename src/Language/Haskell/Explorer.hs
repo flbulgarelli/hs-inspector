@@ -3,6 +3,8 @@ module Language.Haskell.Explorer (
   parseBindings,
   declsOf,
   rhssOf,
+  bindingsOf,
+  transitiveBindingsOf,
   expressionsOf,
   expressionToBinding,
   EO(..),
@@ -12,6 +14,8 @@ module Language.Haskell.Explorer (
 import Language.Haskell.Syntax
 import Language.Haskell.Names
 import Language.Haskell.Parser
+import Data.Maybe (maybeToList)
+import Data.List (nub)
 
 type Binding = String
 type Code = String
@@ -32,6 +36,14 @@ expressionsOf binding code = do
   rhs <- rhssOf binding code
   top <- topExpressions rhs
   unfoldExpression top
+
+bindingsOf :: Binding -> Code -> [Binding]
+bindingsOf binding code = nub $ do
+          expr <- expressionsOf binding code
+          maybeToList . expressionToBinding $ expr
+
+transitiveBindingsOf :: Binding -> Code -> [Binding]
+transitiveBindingsOf binding code =  expand (`bindingsOf` code) binding
 
 parseDecls :: Code -> [HsDecl]
 parseDecls code
@@ -76,4 +88,12 @@ rhsForBinding (HsFunBind cases) = cases >>= \(HsMatch _ _ _ rhs localDecls) -> c
 rhsForBinding _ = []
 
 concatRhs rhs l = [rhs] ++ concatMap rhsForBinding l
+
+
+expand :: Eq a => (a-> [a]) -> a -> [a]
+expand f x = expand' [] f [x]
+
+expand' _ _ [] = []
+expand' ps f (x:xs) | elem x ps = expand' ps f xs
+                    | otherwise = [x] ++ expand' (x:ps) f (xs ++ f x)
 
