@@ -1,24 +1,79 @@
-module Language.Haskell.Explorer where
+module Language.Haskell.Explorer (
+  parseDecls,
+  parseBindings,
+  declsOf,
+  rhssOf,
+  expressionsOf,
+  expressionToBinding,
+  EO(..),
+  Binding,
+  Code) where
 
 import Language.Haskell.Syntax
+import Language.Haskell.Names
+import Language.Haskell.Parser
+
+type Binding = String
+type Code = String
 
 data EO = E HsExp | O HsQOp
 
-exploreExprs f exprs = exploreEO f $ map (E) exprs
+-- xxxOf functions: take a binding and code
+-- parseXxx functions: take just code
 
-exploreEO f es = any f es || any (exploreEO' f) es
+declsOf :: Binding -> Code -> [HsDecl]
+declsOf binding = filter (isBinding binding) . parseDecls
 
-exploreEO' :: (EO -> Bool) -> EO -> Bool
-exploreEO' f (E (HsInfixApp a b c)) = exploreEO f [E a, O b, E c]
-exploreEO' f (E (HsApp a b))  = exploreEO f [E a, E b]
-exploreEO' f (E (HsNegApp a))  = exploreEO f [E a]
-exploreEO' f (E (HsLambda _ _ a)) = exploreEO f [E a]
-exploreEO' f (E (HsList as)) = exploreExprs f as
-exploreEO' f (E (HsListComp a _)) = exploreExprs f [a] --TODO
-exploreEO' f (E (HsTuple as))  = exploreExprs f as
-exploreEO' f (E (HsParen a)) = exploreExprs f [a]
-exploreEO' f (E (HsIf a b c)) = exploreExprs f [a, b, c]
-exploreEO' _ _ = False
+rhssOf :: Binding -> Code -> [HsRhs]
+rhssOf binding = concatMap rhsForBinding . declsOf binding
 
-topExprs (HsUnGuardedRhs e) = [e]
-topExprs (HsGuardedRhss rhss) = rhss >>= \(HsGuardedRhs _ es1 es2) -> [es1, es2]
+expressionsOf :: Binding -> Code -> [EO]
+expressionsOf binding code = do
+  rhs <- rhssOf binding code
+  top <- topExpressions rhs
+  unfoldExpression top
+
+parseDecls :: Code -> [HsDecl]
+parseDecls code
+  | ParseOk (HsModule _ _ _ _ decls) <- parseModule code = decls
+  | otherwise = []
+
+parseBindings :: Code -> [Binding]
+parseBindings = map declName . parseDecls
+
+expressionToBinding :: EO -> Maybe Binding
+expressionToBinding (O (HsQVarOp q)) = qName q
+expressionToBinding (E (HsVar    q)) = qName q
+expressionToBinding _                = Nothing
+
+-- private
+
+topExpressions :: HsRhs -> [EO]
+topExpressions (HsUnGuardedRhs e) = [E e]
+topExpressions (HsGuardedRhss rhss) = rhss >>= \(HsGuardedRhs _ es1 es2) -> [E es1, E es2]
+
+unfoldExpression :: EO -> [EO]
+unfoldExpression expr = expr : concatMap unfoldExpression (subExpressions expr)
+
+subExpressions :: EO -> [EO]
+subExpressions (E (HsInfixApp a b c)) = [E a, O b, E c]
+subExpressions (E (HsApp a b))        = [E a, E b]
+subExpressions (E (HsNegApp a))       = [E a]
+subExpressions (E (HsLambda _ _ a))   = [E a]
+subExpressions (E (HsList as))        = map (E) as
+subExpressions (E (HsListComp a _))   = [E a] --TODO
+subExpressions (E (HsTuple as))       = map (E) as
+subExpressions (E (HsParen a))        = [E a]
+subExpressions (E (HsIf a b c))       = [E a, E b, E c]
+subExpressions _ = []
+
+isBinding :: Binding -> HsDecl -> Bool
+isBinding binding = (==binding).declName
+
+rhsForBinding :: HsDecl -> [HsRhs]
+rhsForBinding (HsPatBind _ _ rhs localDecls) = concatRhs rhs localDecls
+rhsForBinding (HsFunBind cases) = cases >>= \(HsMatch _ _ _ rhs localDecls) -> concatRhs rhs localDecls
+rhsForBinding _ = []
+
+concatRhs rhs l = [rhs] ++ concatMap rhsForBinding l
+

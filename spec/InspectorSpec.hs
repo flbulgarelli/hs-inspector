@@ -150,4 +150,3 @@ spec = do
 
       it "is present" $ do
         hasLambda "f" "f x = 4" `shouldBe` False
-
