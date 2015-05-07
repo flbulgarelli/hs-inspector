@@ -31,6 +31,18 @@ spec = do
                            \g x = m x\n\
                            \m x = if c x then 2 else 3"  `shouldBe` True
 
+    it "is True when inspection can be proven transitively to be True\
+       \in recursive functions" $ do
+      transitive hasIf "f" "f x = g x\n\
+                           \g x = m x\n\
+                           \m x = if f x then 2 else 3"  `shouldBe` True
+
+    it "is False when inspection can be proven transitively to be False\
+           \in recursive functions" $ do
+          transitive hasIf "f" "f x = g x\n\
+                               \g x = m x\n\
+                               \m x = f x"  `shouldBe` False
+
     it "is False when inspection can not be proven transitively to be True" $ do
       transitive hasIf "f" "f x = g x"  `shouldBe` False
 
