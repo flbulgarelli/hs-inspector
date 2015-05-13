@@ -7,7 +7,7 @@ module Language.Haskell.Explorer (
   transitiveBindingsOf,
   expressionsOf,
   expressionToBinding,
-  EO(..),
+  Expression(..),
   Binding,
   Code) where
 
@@ -20,7 +20,7 @@ import Data.List (nub)
 type Binding = String
 type Code = String
 
-data EO = E HsExp | O HsQOp
+data Expression = E HsExp | O HsQOp
 
 -- xxxOf functions: take a binding and code
 -- parseXxx functions: take just code
@@ -31,7 +31,7 @@ declsOf binding = filter (isBinding binding) . parseDecls
 rhssOf :: Binding -> Code -> [HsRhs]
 rhssOf binding = concatMap rhsForBinding . declsOf binding
 
-expressionsOf :: Binding -> Code -> [EO]
+expressionsOf :: Binding -> Code -> [Expression]
 expressionsOf binding code = do
   rhs <- rhssOf binding code
   top <- topExpressions rhs
@@ -53,21 +53,21 @@ parseDecls code
 parseBindings :: Code -> [Binding]
 parseBindings = map declName . parseDecls
 
-expressionToBinding :: EO -> Maybe Binding
+expressionToBinding :: Expression -> Maybe Binding
 expressionToBinding (O (HsQVarOp q)) = qName q
 expressionToBinding (E (HsVar    q)) = qName q
 expressionToBinding _                = Nothing
 
 -- private
 
-topExpressions :: HsRhs -> [EO]
+topExpressions :: HsRhs -> [Expression]
 topExpressions (HsUnGuardedRhs e) = [E e]
 topExpressions (HsGuardedRhss rhss) = rhss >>= \(HsGuardedRhs _ es1 es2) -> [E es1, E es2]
 
-unfoldExpression :: EO -> [EO]
+unfoldExpression :: Expression -> [Expression]
 unfoldExpression expr = expr : concatMap unfoldExpression (subExpressions expr)
 
-subExpressions :: EO -> [EO]
+subExpressions :: Expression -> [Expression]
 subExpressions (E (HsInfixApp a b c)) = [E a, O b, E c]
 subExpressions (E (HsApp a b))        = [E a, E b]
 subExpressions (E (HsNegApp a))       = [E a]

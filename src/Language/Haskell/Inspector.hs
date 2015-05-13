@@ -91,7 +91,7 @@ hasTypeSignature binding = hasDecl f
   where f (HsTypeSig _ [hsName] _)  = isName binding hsName
         f _                         = False
 
-hasExpression :: (EO -> Bool) -> Inspection
+hasExpression :: (Expression -> Bool) -> Inspection
 hasExpression f binding = has f (expressionsOf binding)
 
 hasRhs :: (HsRhs -> Bool)-> Inspection
