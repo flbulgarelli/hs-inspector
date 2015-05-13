@@ -2,7 +2,8 @@ module Language.Haskell.Inspector.Smell (
   hasRedundantBooleanComparison,
   hasRedundantIf,
   hasRedundantGuards,
-  hasRedundantLambda) where
+  hasRedundantLambda,
+  hasRedundantParameter) where
 
 import Language.Haskell.Explorer
 import Language.Haskell.Syntax
@@ -33,6 +34,12 @@ hasRedundantLambda = hasExpression f
   where f (E (HsLambda _ [HsPVar (HsIdent x)] (HsApp _ (HsVar (UnQual (HsIdent y)))))) = x == y
         f _ = False -- TODO consider parenthesis and symbols
 
+hasRedundantParameter :: Inspection
+hasRedundantParameter binding = any f . declsOf binding
+  where f (HsFunBind [
+             HsMatch _ _ params (HsUnGuardedRhs (HsApp _ (HsVar (UnQual arg)))) _ ]) | (HsPVar param) <- last params = param == arg
+        f _ = False
+--private
 isBooleanLiteral (HsCon (UnQual (HsIdent "True")))  = True
 isBooleanLiteral (HsCon (UnQual (HsIdent "False"))) = True
 isBooleanLiteral _                                  = False

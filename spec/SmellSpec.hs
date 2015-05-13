@@ -15,6 +15,19 @@ spec = do
     it "is False when it is an unavoidable lambda" $ do
       hasRedundantLambda "x" "x = \\m -> m f" `shouldBe` False
 
+  describe "hasRedundantParameter" $ do
+    it "is True on trivial application expressions" $ do
+      hasRedundantParameter "foo" "foo x = bar x" `shouldBe` True
+
+    it "is True on complex application expressions" $ do
+      hasRedundantParameter "foo" "foo x = bar y x" `shouldBe` True
+
+    it "is True on complex application expressions with multiple parameters" $ do
+      hasRedundantParameter "foo" "foo z x = bar y x" `shouldBe` True
+
+    it "is False when parameter is not avoidable" $ do
+      hasRedundantParameter "foo" "foo x y = foo y x" `shouldBe` False
+
 
   describe "hasRedundantIf" $ do
     it "is True when if present and both branches are boolean literals" $ do
