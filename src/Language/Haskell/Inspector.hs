@@ -10,6 +10,7 @@ module Language.Haskell.Inspector (
   hasBinding,
   hasTypeDeclaration,
   hasTypeSignature,
+  hasAnonymousVariable,
   hasExpression,
   hasDecl,
   hasRhs,
@@ -91,6 +92,12 @@ hasTypeSignature binding = hasDecl f
   where f (HsTypeSig _ [hsName] _)  = isName binding hsName
         f _                         = False
 
+hasAnonymousVariable :: Inspection
+hasAnonymousVariable binding = any f . declsOf binding
+  where f (HsFunBind hsMatches)    = any (any (== HsPWildCard) . p) hsMatches
+        f _                        = False
+        p (HsMatch _ _ params _ _) = params
+
 hasExpression :: (Expression -> Bool) -> Inspection
 hasExpression f binding = has f (expressionsOf binding)
 
@@ -102,7 +109,6 @@ isParseable = not.null.parseDecls
 
 hasDecl :: (HsDecl -> Bool) -> GlobalInspection
 hasDecl f = has f parseDecls
-
 
 -- private
 

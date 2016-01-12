@@ -150,3 +150,16 @@ spec = do
 
       it "is present" $ do
         hasLambda "f" "f x = 4" `shouldBe` False
+
+
+  describe "hasAnonymousVariable" $ do
+    it "is True if _ is present in paramenters" $ do
+      hasAnonymousVariable "foo" "foo _ = 1" `shouldBe` True
+
+    it "is False if _ is not present in parameters" $ do
+      hasAnonymousVariable "foo" "foo x = 1" `shouldBe` False
+
+    it "is False if _ is present only in seccond equation" $ do
+      let code = unlines ["foo False bool = bool", "foo True _ = True"]
+      hasAnonymousVariable "foo" code `shouldBe` True
+
