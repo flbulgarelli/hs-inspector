@@ -2,13 +2,13 @@
 
 # hs-inspector
 
-`hs-inspector` is a simple library for inspecting Haskell Code. 
+`hs-inspector` is a simple library for inspecting Haskell Code.
 
 ## Docs
 
 Check them at Hackage: https://hackage.haskell.org/package/hs-inspector
 
-## Installing it 
+## Installing it
 
 ```
 $ cabal update
@@ -20,7 +20,7 @@ $ cabal install hs-inspector
 ```
 $ git clone https://github.com/flbulgarelli/hs-inspector
 $ cd hs-inspector
-$ cabal sanbox init .
+$ cabal sandbox init
 $ cabal install --enable-tests
 ```
 
