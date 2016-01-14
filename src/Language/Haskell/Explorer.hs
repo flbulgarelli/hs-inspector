@@ -42,10 +42,9 @@ astOf code | ParseOk ast <- parseModule code = mu ast
 mu :: HsModule -> MuModule
 mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decls))
   where
-    muDecls (HsTypeDecl _ name _ _) = [MuTypeDecl (muName name)] --MuType
-    --muDecls HsDataDecl = MuDataDecl    MuName [MuName] [MuConDecl] [MuQName]
-    --muDecls HsInfixDecl = MuInfixDecl   MuAssoc Int [MuOp]
-    muDecls (HsTypeSig _ names _) = map (\name -> MuTypeSig (muName name)) names --MuQualType
+    muDecls (HsTypeDecl _ name _ _)      = [MuTypeDecl (muName name)]
+    muDecls (HsDataDecl _ _ name _ _ _ ) = [MuDataDecl (muName name)]
+    muDecls (HsTypeSig _ names _) = map (\name -> MuTypeSig (muName name)) names
     muDecls (HsFunBind equations) = [MuFunBind  (map muEquation equations)]
     muDecls (HsPatBind _ (HsPVar name) rhs decls) = [MuPatBind (muName name) (muRhs rhs) (concatMap muDecls decls)]
     muDecls _ = []
@@ -63,11 +62,11 @@ mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decl
     muPat (HsPLit _) = MuPLit ""              -- ^ literal constant
     --muPat HsPInfixApp = MuPInfixApp MuPat MuQName MuPat
     --muPat HsPApp = MuPApp MuQName [MuPat]        -- ^ data constructor and argument
-    muPat (HsPTuple elements) = MuPTuple (map muPat elements)              -- ^ tuple pattern
-    muPat (HsPList elements) = MuPList (map muPat elements)               -- ^ list pattern
+    muPat (HsPTuple elements) = MuPTuple (map muPat elements)
+    muPat (HsPList elements) = MuPList (map muPat elements)
     --muPat HsPParen = MuPParen MuPat                -- ^ parenthesized pattern
-    --muPat HsPAsPat = MuPAsPat String MuPat         -- ^ @\@@-pattern
-    muPat HsPWildCard = MuPWildCard                   -- ^ wildcard pattern (@_@)
+    --muPat HsPAsPat = MuPAsPat String MuPat
+    muPat HsPWildCard = MuPWildCard
     muPat _ = MuPOther
 
     muExp (HsVar name) = MuVar (muQName name)                 -- ^ variable
@@ -91,13 +90,13 @@ mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decl
     muExp _ = MuExpOther
 
     muLit (HsChar        v) = show v
-    muLit (HsString      v) = show v          -- ^ string literal
-    muLit (HsInt         v) = show v         -- ^ integer literal
-    muLit (HsFrac        v) = show v        -- ^ floating point literal
-    muLit (HsCharPrim    v) = show v            -- ^ GHC unboxed character literal
-    muLit (HsStringPrim  v) = show v          -- ^ GHC unboxed string literal
-    muLit (HsIntPrim     v) = show v         -- ^ GHC unboxed integer literal
-    muLit (HsFloatPrim   v) = show v        -- ^ GHC unboxed float literal
+    muLit (HsString      v) = show v
+    muLit (HsInt         v) = show v
+    muLit (HsFrac        v) = show v
+    muLit (HsCharPrim    v) = show v
+    muLit (HsStringPrim  v) = show v
+    muLit (HsIntPrim     v) = show v
+    muLit (HsFloatPrim   v) = show v
     muLit (HsDoublePrim  v) = show v
 
     muName :: HsName -> String

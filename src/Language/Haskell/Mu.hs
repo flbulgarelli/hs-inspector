@@ -1,44 +1,24 @@
 module Language.Haskell.Mu (
     MuModule(..),
-    -- * Declarations
-    MuDecl(..), MuConDecl(..), MuBangType(..),
+    MuDecl(..),
     MuMatch(..), MuRhs(..), MuGuardedRhs(..),
-    -- * Class Assertions and Contexts
-    MuQualType(..),
-    -- * Types
-    MuType(..),
-    -- * Expressions
     MuExp(..), MuStmt(..),
     MuAlt(..), MuGuardedAlts(..), MuGuardedAlt(..),
-    -- * Patterns
     MuPat(..)
-    -- * Variables, Constructors and Operators
   ) where
 
 
 data MuModule = MuModule String [MuDecl] deriving (Show)
 
 data MuDecl
-         = MuTypeDecl    String -- MuType
-         | MuDataDecl    String [String] [MuConDecl] [String]
-         | MuTypeSig     String -- MuQualType
+         = MuTypeDecl    String
+         | MuDataDecl    String
+         | MuTypeSig     String
          | MuFunBind     [MuMatch]
          | MuPatBind     String MuRhs [MuDecl]
   deriving (Eq,Show)
 
 data MuMatch = MuMatch String [MuPat] MuRhs [MuDecl] deriving (Eq,Show)
-
-data MuConDecl
-         = MuConDecl String [MuBangType]
-                                -- ^ ordinary data constructor
-         | MuRecDecl String [([String],MuBangType)]
-                                -- ^ record constructor
-  deriving (Eq,Show)
-
-data MuBangType
-         = MuBangedTy   MuType  -- ^ strict component, marked with \"@!@\"
-         | MuUnBangedTy MuType  -- ^ non-strict component
-  deriving (Eq,Show)
 
 data MuRhs
          = MuUnGuardedRhs MuExp -- ^ unguarded right hand side (/exp/)
@@ -48,18 +28,6 @@ data MuRhs
 
 data MuGuardedRhs
          = MuGuardedRhs MuExp MuExp
-  deriving (Eq,Show)
-
-data MuQualType
-         = MuQualType MuType
-  deriving (Eq,Show)
-
-data MuType
-         = MuTyFun   MuType MuType      -- ^ function type
-         | MuTyTuple [MuType]           -- ^ tuple type
-         | MuTyApp   MuType MuType      -- ^ application of a type constructor
-         | MuTyVar   String             -- ^ type variable
-         | MuTyCon   String            -- ^ named type or type constructor
   deriving (Eq,Show)
 
 data MuExp
