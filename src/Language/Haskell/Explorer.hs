@@ -18,7 +18,7 @@ import Language.Haskell.Mu
 import Language.Haskell.Names
 import Language.Haskell.Parser
 import Data.Maybe (maybeToList)
-import Data.List (nub)
+import Data.List (nub, intercalate)
 import Data.String (IsString(..))
 
 type Binding = String
@@ -41,63 +41,83 @@ astOf code | ParseOk ast <- parseModule code = mu ast
 
 mu :: HsModule -> MuModule
 mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decls))
+  where
+    muDecls (HsTypeDecl _ name _ _) = [MuTypeDecl (muName name)] --MuType
+    --muDecls HsDataDecl = MuDataDecl    MuName [MuName] [MuConDecl] [MuQName]
+    --muDecls HsInfixDecl = MuInfixDecl   MuAssoc Int [MuOp]
+    muDecls (HsTypeSig _ names _) = map (\name -> MuTypeSig (muName name)) names --MuQualType
+    muDecls (HsFunBind equations) = [MuFunBind  (map muEquation equations)]
+    --muDecls HsPatBind = MuPatBind     MuPat MuRhs {-where-} [MuDecl]
+    muDecls _ = []
 
-muDecls (HsTypeDecl _ name _ _) = [MuTypeDecl (muName name)] --MuType
---muDecls HsDataDecl = MuDataDecl    MuName [MuName] [MuConDecl] [MuQName]
---muDecls HsInfixDecl = MuInfixDecl   MuAssoc Int [MuOp]
-muDecls (HsTypeSig _ names _) = map (\name -> MuTypeSig (muName name)) names --MuQualType
-muDecls (HsFunBind equations) = [MuFunBind  (map muEquation equations)]
---muDecls HsPatBind = MuPatBind     MuPat MuRhs {-where-} [MuDecl]
-muDecls _ = []
+    muEquation :: HsMatch -> MuMatch
+    muEquation (HsMatch _ name patterns rhs locals) =
+         MuMatch (muName name) (map muPat patterns) (muRhs rhs) (concatMap muDecls locals)
 
-muEquation :: HsMatch -> MuMatch
-muEquation (HsMatch _ name patterns rhs locals) =
-     MuMatch (muName name) (map muPat patterns) (muRhs rhs) (concatMap muDecls locals)
+    muRhs (HsUnGuardedRhs exp)          = MuUnGuardedRhs (muExp exp)
+    muRhs (HsGuardedRhss  guards) = MuGuardedRhss (map muGuardedRhs guards)
 
-muRhs (HsUnGuardedRhs exp)          = MuUnGuardedRhs (muExp exp)
---muRhs (HsGuardedRhss  [MuGuardedRhs]) = MuGuardedRhss
+    muGuardedRhs (HsGuardedRhs _ condition body) = (MuGuardedRhs (muExp condition) (muExp body))
 
-muPat (HsPVar name) = MuPVar (muName name)                 -- ^ variable
-muPat (HsPLit _) = MuPLit ""              -- ^ literal constant
---muPat HsPInfixApp = MuPInfixApp MuPat MuQName MuPat
---muPat HsPApp = MuPApp MuQName [MuPat]        -- ^ data constructor and argument
---muPat HsPTuple = MuPTuple [MuPat]              -- ^ tuple pattern
---muPat HsPList = MuPList [MuPat]               -- ^ list pattern
---muPat HsPParen = MuPParen MuPat                -- ^ parenthesized pattern
---muPat HsPAsPat = MuPAsPat String MuPat         -- ^ @\@@-pattern
---muPat HsPWildCard = MuPWildCard                   -- ^ wildcard pattern (@_@)
-muPat _ = MuPOther
+    muPat (HsPVar name) = MuPVar (muName name)                 -- ^ variable
+    muPat (HsPLit _) = MuPLit ""              -- ^ literal constant
+    --muPat HsPInfixApp = MuPInfixApp MuPat MuQName MuPat
+    --muPat HsPApp = MuPApp MuQName [MuPat]        -- ^ data constructor and argument
+    muPat (HsPTuple elements) = MuPTuple (map muPat elements)              -- ^ tuple pattern
+    muPat (HsPList elements) = MuPList (map muPat elements)               -- ^ list pattern
+    --muPat HsPParen = MuPParen MuPat                -- ^ parenthesized pattern
+    --muPat HsPAsPat = MuPAsPat String MuPat         -- ^ @\@@-pattern
+    muPat HsPWildCard = MuPWildCard                   -- ^ wildcard pattern (@_@)
+    muPat _ = MuPOther
 
-muExp (HsVar name) = MuVar ""                 -- ^ variable
---muExp HsCon = MuCon MuQName                 -- ^ data constructor
---muExp HsLit = MuLit String               -- ^ literal constant
---muExp HsInfixApp = MuInfixApp MuExp MuQOp MuExp  -- ^ infix application
---muExp HsApp = MuApp MuExp MuExp             -- ^ ordinary application
---muExp HsNegApp = MuNegApp MuExp                -- ^ negation expression @-@ /exp/
---muExp HsLambda = MuLambda [MuPat] MuExp -- ^ lambda expression
---muExp HsLet = MuLet [MuDecl] MuExp          -- ^ local declarations with @let@
---muExp HsIf = MuIf MuExp MuExp MuExp        -- ^ @if@ /exp/ @then@ /exp/ @else@ /exp/
---muExp HsCase = MuCase MuExp [MuAlt]          -- ^ @case@ /exp/ @of@ /alts/
---muExp HsTuple = MuTuple [MuExp]               -- ^ tuple expression
---muExp HsList = MuList [MuExp]                -- ^ list expression
---muExp HsParen = MuParen MuExp                 -- ^ parenthesized expression
---muExp HsLeftSection = MuLeftSection MuExp MuQOp     -- ^ left section @(@/exp/ /qop/@)@
---muExp HsRightSection = MuRightSection MuQOp MuExp    -- ^ right section @(@/qop/ /exp/@)@
---muExp HsEnumFrom = MuEnumFrom MuExp              -- ^ unbounded arithmetic sequence,
-                                        -- incrementing by 1
---muExp HsEnumFromTo = MuEnumFromTo MuExp MuExp      -- ^ bounded arithmetic sequence,
-                                        -- incrementing by 1
---muExp HsEnumFromThen = MuEnumFromThen MuExp MuExp    -- ^ unbounded arithmetic sequence,
-                                        -- with first two elements given
---muExp HsEnumFromThenTo = MuEnumFromThenTo MuExp MuExp MuExp
-                                        -- ^ bounded arithmetic sequence,
-                                        -- with first two elements given
---muExp HsListComp = MuListComp MuExp [MuStmt]     -- ^ list comprehension
-muExp _ = MuExpOther
+    muExp (HsVar name) = MuVar (muQName name)                 -- ^ variable
+    --muExp HsCon = MuCon MuQName                 -- ^ data constructor
+    muExp (HsLit lit) = MuLit (muLit lit)
+    --muExp HsInfixApp = MuInfixApp MuExp MuQOp MuExp  -- ^ infix application
+    --muExp HsApp = MuApp MuExp MuExp             -- ^ ordinary application
+    --muExp HsNegApp = MuNegApp MuExp                -- ^ negation expression @-@ /exp/
+    --muExp HsLambda = MuLambda [MuPat] MuExp -- ^ lambda expression
+    --muExp HsLet = MuLet [MuDecl] MuExp          -- ^ local declarations with @let@
+    --muExp HsIf = MuIf MuExp MuExp MuExp        -- ^ @if@ /exp/ @then@ /exp/ @else@ /exp/
+    --muExp HsCase = MuCase MuExp [MuAlt]          -- ^ @case@ /exp/ @of@ /alts/
+    --muExp HsTuple = MuTuple [MuExp]               -- ^ tuple expression
+    --muExp HsList = MuList [MuExp]                -- ^ list expression
+    --muExp HsParen = MuParen MuExp                 -- ^ parenthesized expression
+    --muExp HsLeftSection = MuLeftSection MuExp MuQOp     -- ^ left section @(@/exp/ /qop/@)@
+    --muExp HsRightSection = MuRightSection MuQOp MuExp    -- ^ right section @(@/qop/ /exp/@)@
+    --muExp HsEnumFrom = MuEnumFrom MuExp              -- ^ unbounded arithmetic sequence,
+                                            -- incrementing by 1
+    --muExp HsEnumFromTo = MuEnumFromTo MuExp MuExp      -- ^ bounded arithmetic sequence,
+                                            -- incrementing by 1
+    --muExp HsEnumFromThen = MuEnumFromThen MuExp MuExp    -- ^ unbounded arithmetic sequence,
+                                            -- with first two elements given
+    --muExp HsEnumFromThenTo = MuEnumFromThenTo MuExp MuExp MuExp
+                                            -- ^ bounded arithmetic sequence,
+                                            -- with first two elements given
+    --muExp HsListComp = MuListComp MuExp [MuStmt]     -- ^ list comprehension
+    muExp _ = MuExpOther
 
-muName :: HsName -> String
-muName (HsSymbol n) = n
-muName (HsIdent  n) = n
+    muLit (HsChar        v) = show v
+    muLit (HsString      v) = show v          -- ^ string literal
+    muLit (HsInt         v) = show v         -- ^ integer literal
+    muLit (HsFrac        v) = show v        -- ^ floating point literal
+    muLit (HsCharPrim    v) = show v            -- ^ GHC unboxed character literal
+    muLit (HsStringPrim  v) = show v          -- ^ GHC unboxed string literal
+    muLit (HsIntPrim     v) = show v         -- ^ GHC unboxed integer literal
+    muLit (HsFloatPrim   v) = show v        -- ^ GHC unboxed float literal
+    muLit (HsDoublePrim  v) = show v
+
+    muName :: HsName -> String
+    muName (HsSymbol n) = n
+    muName (HsIdent  n) = n
+
+    muQName (Qual _ n) = muName n
+    muQName (UnQual n) = muName n
+    muQName (Special HsUnitCon) = "()"
+    muQName (Special HsListCon) = "[]"
+    muQName (Special HsFunCon) =  "->"
+    muQName (Special (HsTupleCon times)) =  intercalate "" . replicate times $ ","
+    muQName (Special (HsCons)) =  ":"
 
 declsOf :: Binding -> AST -> [MuDecl]
 declsOf binding = filter (isBinding binding) . parseDecls

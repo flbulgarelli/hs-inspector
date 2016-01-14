@@ -13,21 +13,10 @@ module Language.Haskell.Mu (
     -- * Patterns
     MuPat(..), MuPatField(..),
     -- * Variables, Constructors and Operators
-    MuQOp(..), MuOp(..),
-    MuSpecialCon(..),
+    MuQOp(..), MuOp(..)
   ) where
 
 
-data MuSpecialCon
-        = MuUnitCon             -- ^ unit type and data constructor @()@
-        | MuListCon             -- ^ list type constructor @[]@
-        | MuFunCon              -- ^ function type constructor @->@
-        | MuTupleCon Int        -- ^ /n/-ary tuple type and data
-                                --   constructors @(,)@ etc
-        | MuCons                -- ^ list data constructor @(:)@
-  deriving (Eq,Ord,Show)
-
--- | Possibly qualified infix operators (/qop/), appearing in expressions.
 data MuQOp
         = MuQVarOp String      -- ^ variable operator (/qvarop/)
         | MuQConOp String      -- ^ constructor operator (/qconop/)
