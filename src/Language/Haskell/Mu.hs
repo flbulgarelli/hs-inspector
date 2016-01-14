@@ -11,7 +11,7 @@ module Language.Haskell.Mu (
     -- * Types
     MuType(..),
     -- * Expressions
-    MuExp(..), MuStmt(..), MuFieldUpdate(..),
+    MuExp(..), MuStmt(..),
     MuAlt(..), MuGuardedAlts(..), MuGuardedAlt(..),
     -- * Patterns
     MuPat(..), MuPatField(..),
@@ -250,10 +250,6 @@ data MuExp
         | MuParen MuExp                 -- ^ parenthesized expression
         | MuLeftSection MuExp MuQOp     -- ^ left section @(@/exp/ /qop/@)@
         | MuRightSection MuQOp MuExp    -- ^ right section @(@/qop/ /exp/@)@
-        | MuRecConstr MuQName [MuFieldUpdate]
-                                        -- ^ record construction expression
-        | MuRecUpdate MuExp [MuFieldUpdate]
-                                        -- ^ record update expression
         | MuEnumFrom MuExp              -- ^ unbounded arithmetic sequence,
                                         -- incrementing by 1
         | MuEnumFromTo MuExp MuExp      -- ^ bounded arithmetic sequence,
@@ -303,11 +299,6 @@ data MuStmt
                                 -- an action whose result is discarded;
                                 -- in a list comprehension, a guard expression
         | MuLetStmt [MuDecl]    -- ^ local bindings
-  deriving (Eq,Show)
-
--- | An /fbind/ in a labeled record construction or update expression.
-data MuFieldUpdate
-        = MuFieldUpdate MuQName MuExp
   deriving (Eq,Show)
 
 -- | An /alt/ in a @case@ expression.
