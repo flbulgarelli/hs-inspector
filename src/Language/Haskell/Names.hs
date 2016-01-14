@@ -4,24 +4,24 @@ module Language.Haskell.Names (
   qName,
   declName) where
 
-import  Language.Haskell.Syntax
+import  Language.Haskell.Mu
 
-isName :: String -> HsName -> Bool
+isName :: String -> MuName -> Bool
 isName n hsName = name hsName == n
 
-name :: HsName -> String
-name (HsSymbol n) = n
-name (HsIdent  n) = n
+name :: MuName -> String
+name (MuSymbol n) = n
+name (MuIdent  n) = n
 
-qName :: HsQName -> Maybe String
+qName :: MuQName -> Maybe String
 qName (Qual  _ hsName) = Just (name hsName)
 qName (UnQual  hsName) = Just (name hsName)
 qName _                = Nothing
 
-declName :: HsDecl -> String
-declName (HsTypeSig _ [b] _) = name b
-declName (HsTypeDecl _ b _ _) = name b
-declName (HsPatBind _ (HsPVar n) _ _) = name n
-declName (HsFunBind cases)  | (HsMatch _ n _ _ _) <- head cases = name n
+declName :: MuDecl -> String
+declName (MuTypeSig _ [b] _) = name b
+declName (MuTypeDecl _ b _ _) = name b
+declName (MuPatBind _ (MuPVar n) _ _) = name n
+declName (MuFunBind cases)  | (MuMatch _ n _ _ _) <- head cases = name n
 declName _                  = []
 

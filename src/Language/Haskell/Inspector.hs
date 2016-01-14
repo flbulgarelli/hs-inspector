@@ -18,9 +18,9 @@ module Language.Haskell.Inspector (
   GlobalInspection
   ) where
 
-import  Language.Haskell.Syntax
 import  Language.Haskell.Names (isName)
 import  Language.Haskell.Explorer
+import  Language.Haskell.Mu
 
 type Inspection = Binding -> AST  -> Bool
 type GlobalInspection = AST  -> Bool
@@ -29,21 +29,21 @@ type GlobalInspection = AST  -> Bool
 -- in its definition
 hasComposition :: Inspection
 hasComposition = hasExpression f
-  where f (O (HsQVarOp (UnQual (HsSymbol ".")))) = True
+  where f (O (MuQVarOp (UnQual (MuSymbol ".")))) = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses guards
 -- in its definition
 hasGuards :: Inspection
 hasGuards = hasRhs f
-  where f (HsGuardedRhss _) = True
+  where f (MuGuardedRhss _) = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses ifs
 -- in its definition
 hasIf :: Inspection
 hasIf = hasExpression f
-  where f (E (HsIf _ _ _)) = True
+  where f (E (MuIf _ _ _)) = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses ifs or guards
@@ -55,7 +55,7 @@ hasConditional target code = hasIf target code || hasGuards target code
 -- in its definition
 hasLambda :: Inspection
 hasLambda = hasExpression f
-  where f (E (HsLambda _ _ _)) = True
+  where f (E (MuLambda _ _ _)) = True
         f _ = False
 
 
@@ -74,7 +74,7 @@ hasUsage target = hasExpression f
 -- in its definition
 hasComprehension :: Inspection
 hasComprehension = hasExpression f
-  where f (E (HsListComp _ _)) = True
+  where f (E (MuListComp _ _)) = True
         f _ = False
 
 -- | Inspection that tells whether a top level binding exists
@@ -83,27 +83,27 @@ hasBinding binding = not.null.rhssOf binding
 
 hasTypeDeclaration :: Inspection
 hasTypeDeclaration binding = hasDecl f
-  where f (HsTypeDecl _ hsName _ _) = isName binding hsName
+  where f (MuTypeDecl _ hsName _ _) = isName binding hsName
         f _                         = False
 
 hasTypeSignature :: Inspection
 hasTypeSignature binding = hasDecl f
-  where f (HsTypeSig _ [hsName] _)  = isName binding hsName
+  where f (MuTypeSig _ [hsName] _)  = isName binding hsName
         f _                         = False
 
 hasAnonymousVariable :: Inspection
 hasAnonymousVariable binding = any f . declsOf binding
-  where f (HsFunBind hsMatches)    = any (any (== HsPWildCard) . p) hsMatches
+  where f (MuFunBind hsMatches)    = any (any (== MuPWildCard) . p) hsMatches
         f _                        = False
-        p (HsMatch _ _ params _ _) = params
+        p (MuMatch _ _ params _ _) = params
 
 hasExpression :: (Expression -> Bool) -> Inspection
 hasExpression f binding = has f (expressionsOf binding)
 
-hasRhs :: (HsRhs -> Bool)-> Inspection
+hasRhs :: (MuRhs -> Bool)-> Inspection
 hasRhs f binding = has f (rhssOf binding)
 
-hasDecl :: (HsDecl -> Bool) -> GlobalInspection
+hasDecl :: (MuDecl -> Bool) -> GlobalInspection
 hasDecl f = has f parseDecls
 
 -- private

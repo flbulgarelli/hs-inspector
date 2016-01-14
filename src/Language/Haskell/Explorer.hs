@@ -14,6 +14,7 @@ module Language.Haskell.Explorer (
   AST) where
 
 import Language.Haskell.Syntax
+import Language.Haskell.Mu
 import Language.Haskell.Names
 import Language.Haskell.Parser
 import Data.Maybe (maybeToList)
@@ -21,14 +22,14 @@ import Data.List (nub)
 import Data.String (IsString(..))
 
 type Binding = String
-type AST = HsModule
+type AST = MuModule
 
-data Expression = E HsExp | O HsQOp
+data Expression = E MuExp | O MuQOp
 
 -- xxxOf functions: take a binding and code
 -- parseXxx functions: take just code
 
-instance IsString HsModule where
+instance IsString MuModule where
   fromString = astOf
 
 isParseable :: String -> Bool
@@ -36,12 +37,15 @@ isParseable code | ParseOk ast <- parseModule code = True
                  | otherwise = False
 
 astOf :: String -> AST
-astOf code | ParseOk ast <- parseModule code = ast
+astOf code | ParseOk ast <- parseModule code = mu ast
 
-declsOf :: Binding -> AST -> [HsDecl]
+mu :: HsModule -> MuModule
+mu _ = error "uninplemented"
+
+declsOf :: Binding -> AST -> [MuDecl]
 declsOf binding = filter (isBinding binding) . parseDecls
 
-rhssOf :: Binding -> AST -> [HsRhs]
+rhssOf :: Binding -> AST -> [MuRhs]
 rhssOf binding = concatMap rhsForBinding . declsOf binding
 
 expressionsOf :: Binding -> AST -> [Expression]
@@ -58,44 +62,44 @@ bindingsOf binding code = nub $ do
 transitiveBindingsOf :: Binding -> AST -> [Binding]
 transitiveBindingsOf binding code =  expand (`bindingsOf` code) binding
 
-parseDecls :: AST -> [HsDecl]
-parseDecls (HsModule _ _ _ _ decls) = decls
+parseDecls :: AST -> [MuDecl]
+parseDecls (MuModule _ _ _ _ decls) = decls
 
 parseBindings :: AST -> [Binding]
 parseBindings = map declName . parseDecls
 
 expressionToBinding :: Expression -> Maybe Binding
-expressionToBinding (O (HsQVarOp q)) = qName q
-expressionToBinding (E (HsVar    q)) = qName q
+expressionToBinding (O (MuQVarOp q)) = qName q
+expressionToBinding (E (MuVar    q)) = qName q
 expressionToBinding _                = Nothing
 
 -- private
 
-topExpressions :: HsRhs -> [Expression]
-topExpressions (HsUnGuardedRhs e) = [E e]
-topExpressions (HsGuardedRhss rhss) = rhss >>= \(HsGuardedRhs _ es1 es2) -> [E es1, E es2]
+topExpressions :: MuRhs -> [Expression]
+topExpressions (MuUnGuardedRhs e) = [E e]
+topExpressions (MuGuardedRhss rhss) = rhss >>= \(MuGuardedRhs _ es1 es2) -> [E es1, E es2]
 
 unfoldExpression :: Expression -> [Expression]
 unfoldExpression expr = expr : concatMap unfoldExpression (subExpressions expr)
 
 subExpressions :: Expression -> [Expression]
-subExpressions (E (HsInfixApp a b c)) = [E a, O b, E c]
-subExpressions (E (HsApp a b))        = [E a, E b]
-subExpressions (E (HsNegApp a))       = [E a]
-subExpressions (E (HsLambda _ _ a))   = [E a]
-subExpressions (E (HsList as))        = map (E) as
-subExpressions (E (HsListComp a _))   = [E a] --TODO
-subExpressions (E (HsTuple as))       = map (E) as
-subExpressions (E (HsParen a))        = [E a]
-subExpressions (E (HsIf a b c))       = [E a, E b, E c]
+subExpressions (E (MuInfixApp a b c)) = [E a, O b, E c]
+subExpressions (E (MuApp a b))        = [E a, E b]
+subExpressions (E (MuNegApp a))       = [E a]
+subExpressions (E (MuLambda _ _ a))   = [E a]
+subExpressions (E (MuList as))        = map (E) as
+subExpressions (E (MuListComp a _))   = [E a] --TODO
+subExpressions (E (MuTuple as))       = map (E) as
+subExpressions (E (MuParen a))        = [E a]
+subExpressions (E (MuIf a b c))       = [E a, E b, E c]
 subExpressions _ = []
 
-isBinding :: Binding -> HsDecl -> Bool
+isBinding :: Binding -> MuDecl -> Bool
 isBinding binding = (==binding).declName
 
-rhsForBinding :: HsDecl -> [HsRhs]
-rhsForBinding (HsPatBind _ _ rhs localDecls) = concatRhs rhs localDecls
-rhsForBinding (HsFunBind cases) = cases >>= \(HsMatch _ _ _ rhs localDecls) -> concatRhs rhs localDecls
+rhsForBinding :: MuDecl -> [MuRhs]
+rhsForBinding (MuPatBind _ _ rhs localDecls) = concatRhs rhs localDecls
+rhsForBinding (MuFunBind cases) = cases >>= \(MuMatch _ _ _ rhs localDecls) -> concatRhs rhs localDecls
 rhsForBinding _ = []
 
 concatRhs rhs l = [rhs] ++ concatMap rhsForBinding l

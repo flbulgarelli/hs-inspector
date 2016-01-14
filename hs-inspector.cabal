@@ -22,6 +22,7 @@ library
       src
   exposed-modules:
     Language.Haskell.Names
+    Language.Haskell.Mu
     Language.Haskell.Explorer
     Language.Haskell.Inspector
     Language.Haskell.Inspector.Smell
