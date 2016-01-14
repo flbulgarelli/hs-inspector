@@ -63,7 +63,7 @@ transitiveBindingsOf :: Binding -> AST -> [Binding]
 transitiveBindingsOf binding code =  expand (`bindingsOf` code) binding
 
 parseDecls :: AST -> [MuDecl]
-parseDecls (MuModule _ _ _ decls) = decls
+parseDecls (MuModule _ decls) = decls
 
 parseBindings :: AST -> [Binding]
 parseBindings = map declName . parseDecls

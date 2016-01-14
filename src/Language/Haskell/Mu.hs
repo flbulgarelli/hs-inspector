@@ -1,7 +1,6 @@
 module Language.Haskell.Mu (
-    -- * Modules
-    MuModule(..), MuExportSpec(..),
-    MuImportDecl(..), MuImportSpec(..), MuAssoc(..),
+    MuModule(..),
+    MuAssoc(..),
     -- * Declarations
     MuDecl(..), MuConDecl(..), MuBangType(..),
     MuMatch(..), MuRhs(..), MuGuardedRhs(..),
@@ -18,13 +17,10 @@ module Language.Haskell.Mu (
     -- * Literals
     MuLiteral(..),
     -- * Variables, Constructors and Operators
-    Module(..), MuQName(..), MuName(..), MuQOp(..), MuOp(..),
+    MuQName(..), MuName(..), MuQOp(..), MuOp(..),
     MuSpecialCon(..), MuCName(..),
   ) where
 
-
-newtype Module = Module String
-  deriving (Eq,Ord,Show)
 
 data MuSpecialCon
         = MuUnitCon             -- ^ unit type and data constructor @()@
@@ -38,7 +34,7 @@ data MuSpecialCon
 -- | This type is used to represent qualified variables, and also
 -- qualified constructors.
 data MuQName
-        = Qual Module MuName    -- ^ name qualified with a module name
+        = Qual String MuName    -- ^ name qualified with a module name
         | UnQual MuName         -- ^ unqualified name
         | Special MuSpecialCon  -- ^ built-in constructor with special syntax
   deriving (Eq,Ord,Show)
@@ -69,52 +65,8 @@ data MuCName
   deriving (Eq,Ord,Show)
 
 -- | A Haskell source module.
-data MuModule = MuModule Module (Maybe [MuExportSpec])
-                         [MuImportDecl] [MuDecl]
+data MuModule = MuModule String [MuDecl]
   deriving (Show)
-
--- | Export specification.
-data MuExportSpec
-         = MuEVar MuQName                       -- ^ variable
-         | MuEAbs MuQName                       -- ^ @T@:
-                        -- a class or datatype exported abstractly,
-                        -- or a type synonym.
-         | MuEThingAll MuQName                  -- ^ @T(..)@:
-                        -- a class exported with all of its methods, or
-                        -- a datatype exported with all of its constructors.
-         | MuEThingWith MuQName [MuCName]       -- ^ @T(C_1,...,C_n)@:
-                        -- a class exported with some of its methods, or
-                        -- a datatype exported with some of its constructors.
-         | MuEModuleContents Module             -- ^ @module M@:
-                        -- re-export a module.
-  deriving (Eq,Show)
-
--- | Import declaration.
-data MuImportDecl = MuImportDecl
-        {
-          importModule :: Module        -- ^ name of the module imported.
-        , importQualified :: Bool       -- ^ imported @qualified@?
-        , importAs :: Maybe Module      -- ^ optional alias name in an
-                                        -- @as@ clause.
-        , importSpecs :: Maybe (Bool,[MuImportSpec])
-                        -- ^ optional list of import specifications.
-                        -- The 'Bool' is 'True' if the names are excluded
-                        -- by @hiding@.
-        }
-  deriving (Eq,Show)
-
--- | Import specification.
-data MuImportSpec
-         = MuIVar MuName                        -- ^ variable
-         | MuIAbs MuName                        -- ^ @T@:
-                        -- the name of a class, datatype or type synonym.
-         | MuIThingAll MuName                   -- ^ @T(..)@:
-                        -- a class imported with all of its methods, or
-                        -- a datatype imported with all of its constructors.
-         | MuIThingWith MuName [MuCName]        -- ^ @T(C_1,...,C_n)@:
-                        -- a class imported with some of its methods, or
-                        -- a datatype imported with some of its constructors.
-  deriving (Eq,Show)
 
 -- | Associativity of an operator.
 data MuAssoc
@@ -134,7 +86,6 @@ data MuDecl
          | MuTypeSig     [MuName] MuQualType
          | MuFunBind     [MuMatch]
          | MuPatBind     MuPat MuRhs {-where-} [MuDecl]
-         | MuForeignImport String MuSafety String MuName MuType
          | MuForeignExport String String MuName MuType
   deriving (Eq,Show)
 
