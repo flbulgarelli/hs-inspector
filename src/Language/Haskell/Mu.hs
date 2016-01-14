@@ -36,7 +36,6 @@ data MuExp
         | MuLit String               -- ^ literal constant
         | MuInfixApp MuExp String MuExp  -- ^ infix application
         | MuApp MuExp MuExp             -- ^ ordinary application
-        | MuNegApp MuExp                -- ^ negation expression @-@ /exp/
         | MuLambda [MuPat] MuExp -- ^ lambda expression
         | MuLet [MuDecl] MuExp          -- ^ local declarations with @let@
         | MuIf MuExp MuExp MuExp        -- ^ @if@ /exp/ @then@ /exp/ @else@ /exp/
