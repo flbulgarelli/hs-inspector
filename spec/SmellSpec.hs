@@ -4,7 +4,7 @@ module SmellSpec (spec) where
 
 import           Test.Hspec
 import           Language.Haskell.Inspector.Smell
-import           Language.Haskell.Explorer
+import           Language.Haskell.Explorer ()
 
 spec :: Spec
 spec = do

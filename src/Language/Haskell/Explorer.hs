@@ -38,7 +38,7 @@ astOf :: String -> AST
 astOf code | ParseOk ast <- parseModule code = mu ast
 
 mu :: HsModule -> MuModule
-mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decls))
+mu (HsModule _ _ _ _ decls) = (MuModule (concatMap muDecls decls))
   where
     muDecls (HsTypeDecl _ name _ _)      = [MuTypeDecl (muName name)]
     muDecls (HsDataDecl _ _ name _ _ _ ) = [MuDataDecl (muName name)]
@@ -133,7 +133,7 @@ transitiveBindingsOf :: Binding -> AST -> [Binding]
 transitiveBindingsOf binding code =  expand (`bindingsOf` code) binding
 
 parseDecls :: AST -> [MuDecl]
-parseDecls (MuModule _ decls) = decls
+parseDecls (MuModule decls) = decls
 
 parseBindings :: AST -> [Binding]
 parseBindings = map declName . parseDecls

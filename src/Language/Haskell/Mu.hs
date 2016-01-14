@@ -8,7 +8,7 @@ module Language.Haskell.Mu (
   ) where
 
 
-data MuModule = MuModule String [MuDecl] deriving (Show)
+data MuModule = MuModule [MuDecl] deriving (Show)
 
 data MuDecl
          = MuTypeDecl    String
