@@ -31,15 +31,15 @@ hasRedundantIf = hasExpression f
 hasRedundantGuards :: Inspection
 hasRedundantGuards = hasRhs f -- TODO not true when condition is a pattern
   where f (MuGuardedRhss [
-            MuGuardedRhs _ _ x,
-            MuGuardedRhs _ (MuVar (UnQual (MuIdent "otherwise"))) y]) = all isBooleanLiteral [x, y]
+            MuGuardedRhs _ x,
+            MuGuardedRhs (MuVar (UnQual (MuIdent "otherwise"))) y]) = all isBooleanLiteral [x, y]
         f _ = False
 
 
 -- | Inspection that tells whether a binding has lambda expressions like '\x -> g x'
 hasRedundantLambda :: Inspection
 hasRedundantLambda = hasExpression f
-  where f (E (MuLambda _ [MuPVar (MuIdent x)] (MuApp _ (MuVar (UnQual (MuIdent y)))))) = x == y
+  where f (E (MuLambda [MuPVar (MuIdent x)] (MuApp _ (MuVar (UnQual (MuIdent y)))))) = x == y
         f _ = False -- TODO consider parenthesis and symbols
 
 -- | Inspection that tells whether a binding has parameters that
@@ -47,7 +47,7 @@ hasRedundantLambda = hasExpression f
 hasRedundantParameter :: Inspection
 hasRedundantParameter binding = any f . declsOf binding
   where f (MuFunBind [
-             MuMatch _ _ params (MuUnGuardedRhs (MuApp _ (MuVar (UnQual arg)))) _ ]) | (MuPVar param) <- last params = param == arg
+             MuMatch _ params (MuUnGuardedRhs (MuApp _ (MuVar (UnQual arg)))) _ ]) | (MuPVar param) <- last params = param == arg
         f _ = False
 --private
 isBooleanLiteral (MuCon (UnQual (MuIdent "True")))  = True

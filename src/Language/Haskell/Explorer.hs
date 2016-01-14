@@ -63,7 +63,7 @@ transitiveBindingsOf :: Binding -> AST -> [Binding]
 transitiveBindingsOf binding code =  expand (`bindingsOf` code) binding
 
 parseDecls :: AST -> [MuDecl]
-parseDecls (MuModule _ _ _ _ decls) = decls
+parseDecls (MuModule _ _ _ decls) = decls
 
 parseBindings :: AST -> [Binding]
 parseBindings = map declName . parseDecls
@@ -77,7 +77,7 @@ expressionToBinding _                = Nothing
 
 topExpressions :: MuRhs -> [Expression]
 topExpressions (MuUnGuardedRhs e) = [E e]
-topExpressions (MuGuardedRhss rhss) = rhss >>= \(MuGuardedRhs _ es1 es2) -> [E es1, E es2]
+topExpressions (MuGuardedRhss rhss) = rhss >>= \(MuGuardedRhs es1 es2) -> [E es1, E es2]
 
 unfoldExpression :: Expression -> [Expression]
 unfoldExpression expr = expr : concatMap unfoldExpression (subExpressions expr)
@@ -86,7 +86,7 @@ subExpressions :: Expression -> [Expression]
 subExpressions (E (MuInfixApp a b c)) = [E a, O b, E c]
 subExpressions (E (MuApp a b))        = [E a, E b]
 subExpressions (E (MuNegApp a))       = [E a]
-subExpressions (E (MuLambda _ _ a))   = [E a]
+subExpressions (E (MuLambda _ a))   = [E a]
 subExpressions (E (MuList as))        = map (E) as
 subExpressions (E (MuListComp a _))   = [E a] --TODO
 subExpressions (E (MuTuple as))       = map (E) as
@@ -98,8 +98,8 @@ isBinding :: Binding -> MuDecl -> Bool
 isBinding binding = (==binding).declName
 
 rhsForBinding :: MuDecl -> [MuRhs]
-rhsForBinding (MuPatBind _ _ rhs localDecls) = concatRhs rhs localDecls
-rhsForBinding (MuFunBind cases) = cases >>= \(MuMatch _ _ _ rhs localDecls) -> concatRhs rhs localDecls
+rhsForBinding (MuPatBind _ rhs localDecls) = concatRhs rhs localDecls
+rhsForBinding (MuFunBind cases) = cases >>= \(MuMatch _ _ rhs localDecls) -> concatRhs rhs localDecls
 rhsForBinding _ = []
 
 concatRhs rhs l = [rhs] ++ concatMap rhsForBinding l

@@ -20,16 +20,8 @@ module Language.Haskell.Mu (
     -- * Variables, Constructors and Operators
     Module(..), MuQName(..), MuName(..), MuQOp(..), MuOp(..),
     MuSpecialCon(..), MuCName(..),
-
-    SrcLoc(..),
   ) where
 
-data SrcLoc = SrcLoc {
-                srcFilename :: String,
-                srcLine :: Int,
-                srcColumn :: Int
-                }
-  deriving (Eq,Ord,Show)
 
 newtype Module = Module String
   deriving (Eq,Ord,Show)
@@ -77,7 +69,7 @@ data MuCName
   deriving (Eq,Ord,Show)
 
 -- | A Haskell source module.
-data MuModule = MuModule SrcLoc Module (Maybe [MuExportSpec])
+data MuModule = MuModule Module (Maybe [MuExportSpec])
                          [MuImportDecl] [MuDecl]
   deriving (Show)
 
@@ -99,8 +91,8 @@ data MuExportSpec
 
 -- | Import declaration.
 data MuImportDecl = MuImportDecl
-        { importLoc :: SrcLoc           -- ^ position of the @import@ keyword.
-        , importModule :: Module        -- ^ name of the module imported.
+        {
+          importModule :: Module        -- ^ name of the module imported.
         , importQualified :: Bool       -- ^ imported @qualified@?
         , importAs :: Maybe Module      -- ^ optional alias name in an
                                         -- @as@ clause.
@@ -132,30 +124,30 @@ data MuAssoc
   deriving (Eq,Show)
 
 data MuDecl
-         = MuTypeDecl    SrcLoc MuName [MuName] MuType
-         | MuDataDecl    SrcLoc MuContext MuName [MuName] [MuConDecl] [MuQName]
-         | MuInfixDecl   SrcLoc MuAssoc Int [MuOp]
-         | MuNewTypeDecl SrcLoc MuContext MuName [MuName] MuConDecl [MuQName]
-         | MuClassDecl   SrcLoc MuContext MuName [MuName] [MuDecl]
-         | MuInstDecl    SrcLoc MuContext MuQName [MuType] [MuDecl]
-         | MuDefaultDecl SrcLoc [MuType]
-         | MuTypeSig     SrcLoc [MuName] MuQualType
+         = MuTypeDecl    MuName [MuName] MuType
+         | MuDataDecl    MuContext MuName [MuName] [MuConDecl] [MuQName]
+         | MuInfixDecl   MuAssoc Int [MuOp]
+         | MuNewTypeDecl MuContext MuName [MuName] MuConDecl [MuQName]
+         | MuClassDecl   MuContext MuName [MuName] [MuDecl]
+         | MuInstDecl    MuContext MuQName [MuType] [MuDecl]
+         | MuDefaultDecl [MuType]
+         | MuTypeSig     [MuName] MuQualType
          | MuFunBind     [MuMatch]
-         | MuPatBind     SrcLoc MuPat MuRhs {-where-} [MuDecl]
-         | MuForeignImport SrcLoc String MuSafety String MuName MuType
-         | MuForeignExport SrcLoc String String MuName MuType
+         | MuPatBind     MuPat MuRhs {-where-} [MuDecl]
+         | MuForeignImport String MuSafety String MuName MuType
+         | MuForeignExport String String MuName MuType
   deriving (Eq,Show)
 
 -- | Clauses of a function binding.
 data MuMatch
-         = MuMatch SrcLoc MuName [MuPat] MuRhs {-where-} [MuDecl]
+         = MuMatch MuName [MuPat] MuRhs {-where-} [MuDecl]
   deriving (Eq,Show)
 
 -- | Declaration of a data constructor.
 data MuConDecl
-         = MuConDecl SrcLoc MuName [MuBangType]
+         = MuConDecl MuName [MuBangType]
                                 -- ^ ordinary data constructor
-         | MuRecDecl SrcLoc MuName [([MuName],MuBangType)]
+         | MuRecDecl MuName [([MuName],MuBangType)]
                                 -- ^ record constructor
   deriving (Eq,Show)
 
@@ -176,7 +168,7 @@ data MuRhs
 -- | A guarded right hand side @|@ /exp/ @=@ /exp/.
 -- The first expression will be Boolean-valued.
 data MuGuardedRhs
-         = MuGuardedRhs SrcLoc MuExp MuExp
+         = MuGuardedRhs MuExp MuExp
   deriving (Eq,Show)
 
 -- | Safety level for invoking a foreign entity
@@ -246,7 +238,7 @@ data MuExp
         | MuInfixApp MuExp MuQOp MuExp  -- ^ infix application
         | MuApp MuExp MuExp             -- ^ ordinary application
         | MuNegApp MuExp                -- ^ negation expression @-@ /exp/
-        | MuLambda SrcLoc [MuPat] MuExp -- ^ lambda expression
+        | MuLambda [MuPat] MuExp -- ^ lambda expression
         | MuLet [MuDecl] MuExp          -- ^ local declarations with @let@
         | MuIf MuExp MuExp MuExp        -- ^ @if@ /exp/ @then@ /exp/ @else@ /exp/
         | MuCase MuExp [MuAlt]          -- ^ @case@ /exp/ @of@ /alts/
@@ -272,7 +264,7 @@ data MuExp
                                         -- ^ bounded arithmetic sequence,
                                         -- with first two elements given
         | MuListComp MuExp [MuStmt]     -- ^ list comprehension
-        | MuExpTypeSig SrcLoc MuExp MuQualType
+        | MuExpTypeSig MuExp MuQualType
                                         -- ^ expression type signature
         | MuAsPat MuName MuExp          -- ^ patterns only
         | MuWildCard                    -- ^ patterns only
@@ -305,7 +297,7 @@ data MuPatField
 -- | This type represents both /stmt/ in a @do@-expression,
 --   and /qual/ in a list comprehension.
 data MuStmt
-        = MuGenerator SrcLoc MuPat MuExp
+        = MuGenerator MuPat MuExp
                                 -- ^ a generator /pat/ @<-@ /exp/
         | MuQualifier MuExp     -- ^ an /exp/ by itself: in a @do@-expression,
                                 -- an action whose result is discarded;
@@ -320,7 +312,7 @@ data MuFieldUpdate
 
 -- | An /alt/ in a @case@ expression.
 data MuAlt
-        = MuAlt SrcLoc MuPat MuGuardedAlts [MuDecl]
+        = MuAlt MuPat MuGuardedAlts [MuDecl]
   deriving (Eq,Show)
 
 data MuGuardedAlts
@@ -331,5 +323,5 @@ data MuGuardedAlts
 -- | A guarded alternative @|@ /exp/ @->@ /exp/.
 -- The first expression will be Boolean-valued.
 data MuGuardedAlt
-        = MuGuardedAlt SrcLoc MuExp MuExp
+        = MuGuardedAlt MuExp MuExp
   deriving (Eq,Show)

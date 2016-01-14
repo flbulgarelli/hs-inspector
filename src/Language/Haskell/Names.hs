@@ -19,9 +19,9 @@ qName (UnQual  hsName) = Just (name hsName)
 qName _                = Nothing
 
 declName :: MuDecl -> String
-declName (MuTypeSig _ [b] _) = name b
-declName (MuTypeDecl _ b _ _) = name b
-declName (MuPatBind _ (MuPVar n) _ _) = name n
-declName (MuFunBind cases)  | (MuMatch _ n _ _ _) <- head cases = name n
+declName (MuTypeSig [b] _) = name b
+declName (MuTypeDecl b _ _) = name b
+declName (MuPatBind (MuPVar n) _ _) = name n
+declName (MuFunBind cases)  | (MuMatch n _ _ _) <- head cases = name n
 declName _                  = []
 

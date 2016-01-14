@@ -55,7 +55,7 @@ hasConditional target code = hasIf target code || hasGuards target code
 -- in its definition
 hasLambda :: Inspection
 hasLambda = hasExpression f
-  where f (E (MuLambda _ _ _)) = True
+  where f (E (MuLambda _ _)) = True
         f _ = False
 
 
@@ -83,19 +83,19 @@ hasBinding binding = not.null.rhssOf binding
 
 hasTypeDeclaration :: Inspection
 hasTypeDeclaration binding = hasDecl f
-  where f (MuTypeDecl _ hsName _ _) = isName binding hsName
+  where f (MuTypeDecl hsName _ _) = isName binding hsName
         f _                         = False
 
 hasTypeSignature :: Inspection
 hasTypeSignature binding = hasDecl f
-  where f (MuTypeSig _ [hsName] _)  = isName binding hsName
+  where f (MuTypeSig [hsName] _)  = isName binding hsName
         f _                         = False
 
 hasAnonymousVariable :: Inspection
 hasAnonymousVariable binding = any f . declsOf binding
   where f (MuFunBind hsMatches)    = any (any (== MuPWildCard) . p) hsMatches
         f _                        = False
-        p (MuMatch _ _ params _ _) = params
+        p (MuMatch _ params _ _) = params
 
 hasExpression :: (Expression -> Bool) -> Inspection
 hasExpression f binding = has f (expressionsOf binding)
