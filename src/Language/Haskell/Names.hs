@@ -1,27 +1,22 @@
 module Language.Haskell.Names (
   isName,
-  name,
   qName,
   declName) where
 
 import  Language.Haskell.Mu
 
-isName :: String -> MuName -> Bool
-isName n hsName = name hsName == n
-
-name :: MuName -> String
-name (MuSymbol n) = n
-name (MuIdent  n) = n
+isName :: String -> String -> Bool
+isName n hsName = hsName == n
 
 qName :: MuQName -> Maybe String
-qName (Qual  _ hsName) = Just (name hsName)
-qName (UnQual  hsName) = Just (name hsName)
+qName (Qual  _ hsName) = Just (hsName)
+qName (UnQual  hsName) = Just (hsName)
 qName _                = Nothing
 
 declName :: MuDecl -> String
-declName (MuTypeSig [b] _) = name b
-declName (MuTypeDecl b _ _) = name b
-declName (MuPatBind (MuPVar n) _ _) = name n
-declName (MuFunBind cases)  | (MuMatch n _ _ _) <- head cases = name n
+declName (MuTypeSig [b] _) = b
+declName (MuTypeDecl b ) = b
+declName (MuPatBind (MuPVar n) _ _) = n
+declName (MuFunBind cases)  | (MuMatch n _ _ _) <- head cases = n
 declName _                  = []
 

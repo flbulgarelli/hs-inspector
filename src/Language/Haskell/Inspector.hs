@@ -29,7 +29,7 @@ type GlobalInspection = AST  -> Bool
 -- in its definition
 hasComposition :: Inspection
 hasComposition = hasExpression f
-  where f (O (MuQVarOp (UnQual (MuSymbol ".")))) = True
+  where f (O (MuQVarOp (UnQual "."))) = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses guards
@@ -83,13 +83,13 @@ hasBinding binding = not.null.rhssOf binding
 
 hasTypeDeclaration :: Inspection
 hasTypeDeclaration binding = hasDecl f
-  where f (MuTypeDecl hsName _ _) = isName binding hsName
-        f _                         = False
+  where f (MuTypeDecl hsName) = isName binding hsName
+        f _                   = False
 
 hasTypeSignature :: Inspection
 hasTypeSignature binding = hasDecl f
   where f (MuTypeSig [hsName] _)  = isName binding hsName
-        f _                         = False
+        f _                       = False
 
 hasAnonymousVariable :: Inspection
 hasAnonymousVariable binding = any f . declsOf binding

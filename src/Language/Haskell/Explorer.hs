@@ -44,6 +44,17 @@ mu (HsModule _ (Module name) _ _ decls) = (MuModule name (map muDecls decls))
 
 muDecls _ = error "'unimplemented'"
 
+muDecls (HsTypeDecl _ name _ _) = MuTypeDecl (muName name) --MuType
+--muDecls HsDataDecl = MuDataDecl    MuName [MuName] [MuConDecl] [MuQName]
+--muDecls HsInfixDecl = MuInfixDecl   MuAssoc Int [MuOp]
+--muDecls HsTypeSig = MuTypeSig     [MuName] MuQualType
+--muDecls HsFunBind = MuFunBind     [MuMatch]
+--muDecls HsPatBind = MuPatBind     MuPat MuRhs {-where-} [MuDecl]
+
+muName :: HsName -> String
+muName (HsSymbol n) = n
+muName (HsIdent  n) = n
+
 declsOf :: Binding -> AST -> [MuDecl]
 declsOf binding = filter (isBinding binding) . parseDecls
 

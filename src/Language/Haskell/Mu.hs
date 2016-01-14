@@ -16,7 +16,7 @@ module Language.Haskell.Mu (
     -- * Literals
     MuLiteral(..),
     -- * Variables, Constructors and Operators
-    MuQName(..), MuName(..), MuQOp(..), MuOp(..),
+    MuQName(..), MuQOp(..), MuOp(..),
     MuSpecialCon(..),
   ) where
 
@@ -33,15 +33,9 @@ data MuSpecialCon
 -- | This type is used to represent qualified variables, and also
 -- qualified constructors.
 data MuQName
-        = Qual String MuName    -- ^ name qualified with a module name
-        | UnQual MuName         -- ^ unqualified name
+        = Qual String String    -- ^ name qualified with a module name
+        | UnQual String         -- ^ unqualified name
         | Special MuSpecialCon  -- ^ built-in constructor with special syntax
-  deriving (Eq,Ord,Show)
-
--- | This type is used to represent variables, and also constructors.
-data MuName
-        = MuIdent String        -- ^ /varid/ or /conid/
-        | MuSymbol String       -- ^ /varsym/ or /consym/
   deriving (Eq,Ord,Show)
 
 -- | Possibly qualified infix operators (/qop/), appearing in expressions.
@@ -52,8 +46,8 @@ data MuQOp
 
 -- | Operators, appearing in @infix@ declarations.
 data MuOp
-        = MuVarOp MuName        -- ^ variable operator (/varop/)
-        | MuConOp MuName        -- ^ constructor operator (/conop/)
+        = MuVarOp String        -- ^ variable operator (/varop/)
+        | MuConOp String        -- ^ constructor operator (/conop/)
   deriving (Eq,Ord,Show)
 
 -- | A Haskell source module.
@@ -68,24 +62,24 @@ data MuAssoc
   deriving (Eq,Show)
 
 data MuDecl
-         = MuTypeDecl    MuName [MuName] MuType
-         | MuDataDecl    MuName [MuName] [MuConDecl] [MuQName]
+         = MuTypeDecl    String -- MuType
+         | MuDataDecl    String [String] [MuConDecl] [MuQName]
          | MuInfixDecl   MuAssoc Int [MuOp]
-         | MuTypeSig     [MuName] MuQualType
+         | MuTypeSig     [String] MuQualType
          | MuFunBind     [MuMatch]
          | MuPatBind     MuPat MuRhs {-where-} [MuDecl]
   deriving (Eq,Show)
 
 -- | Clauses of a function binding.
 data MuMatch
-         = MuMatch MuName [MuPat] MuRhs {-where-} [MuDecl]
+         = MuMatch String [MuPat] MuRhs {-where-} [MuDecl]
   deriving (Eq,Show)
 
 -- | Declaration of a data constructor.
 data MuConDecl
-         = MuConDecl MuName [MuBangType]
+         = MuConDecl String [MuBangType]
                                 -- ^ ordinary data constructor
-         | MuRecDecl MuName [([MuName],MuBangType)]
+         | MuRecDecl String [([String],MuBangType)]
                                 -- ^ record constructor
   deriving (Eq,Show)
 
@@ -120,7 +114,7 @@ data MuType
          = MuTyFun   MuType MuType      -- ^ function type
          | MuTyTuple [MuType]           -- ^ tuple type
          | MuTyApp   MuType MuType      -- ^ application of a type constructor
-         | MuTyVar   MuName             -- ^ type variable
+         | MuTyVar   String             -- ^ type variable
          | MuTyCon   MuQName            -- ^ named type or type constructor
   deriving (Eq,Show)
 
@@ -187,14 +181,14 @@ data MuExp
         | MuListComp MuExp [MuStmt]     -- ^ list comprehension
         | MuExpTypeSig MuExp MuQualType
                                         -- ^ expression type signature
-        | MuAsPat MuName MuExp          -- ^ patterns only
+        | MuAsPat String MuExp          -- ^ patterns only
         | MuWildCard                    -- ^ patterns only
         | MuIrrPat MuExp                -- ^ patterns only
   deriving (Eq,Show)
 
 -- | A pattern, to be matched against a value.
 data MuPat
-        = MuPVar MuName                 -- ^ variable
+        = MuPVar String                 -- ^ variable
         | MuPLit MuLiteral              -- ^ literal constant
         | MuPInfixApp MuPat MuQName MuPat
                                         -- ^ pattern with infix data constructor
@@ -203,7 +197,7 @@ data MuPat
         | MuPTuple [MuPat]              -- ^ tuple pattern
         | MuPList [MuPat]               -- ^ list pattern
         | MuPParen MuPat                -- ^ parenthesized pattern
-        | MuPAsPat MuName MuPat         -- ^ @\@@-pattern
+        | MuPAsPat String MuPat         -- ^ @\@@-pattern
         | MuPWildCard                   -- ^ wildcard pattern (@_@)
   deriving (Eq,Show)
 
