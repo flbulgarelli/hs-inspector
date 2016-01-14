@@ -40,7 +40,9 @@ astOf :: String -> AST
 astOf code | ParseOk ast <- parseModule code = mu ast
 
 mu :: HsModule -> MuModule
-mu _ = error "uninplemented"
+mu (HsModule _ (Module name) _ _ decls) = (MuModule name (map muDecls decls))
+
+muDecls _ = error "'unimplemented'"
 
 declsOf :: Binding -> AST -> [MuDecl]
 declsOf binding = filter (isBinding binding) . parseDecls

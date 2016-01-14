@@ -4,9 +4,8 @@ module Language.Haskell.Mu (
     -- * Declarations
     MuDecl(..), MuConDecl(..), MuBangType(..),
     MuMatch(..), MuRhs(..), MuGuardedRhs(..),
-    MuSafety(..),
     -- * Class Assertions and Contexts
-    MuQualType(..), MuContext, MuAsst,
+    MuQualType(..),
     -- * Types
     MuType(..),
     -- * Expressions
@@ -18,7 +17,7 @@ module Language.Haskell.Mu (
     MuLiteral(..),
     -- * Variables, Constructors and Operators
     MuQName(..), MuName(..), MuQOp(..), MuOp(..),
-    MuSpecialCon(..), MuCName(..),
+    MuSpecialCon(..),
   ) where
 
 
@@ -57,13 +56,6 @@ data MuOp
         | MuConOp MuName        -- ^ constructor operator (/conop/)
   deriving (Eq,Ord,Show)
 
--- | A name (/cname/) of a component of a class or data type in an @import@
--- or export specification.
-data MuCName
-        = MuVarName MuName      -- ^ name of a method or field
-        | MuConName MuName      -- ^ name of a data constructor
-  deriving (Eq,Ord,Show)
-
 -- | A Haskell source module.
 data MuModule = MuModule String [MuDecl]
   deriving (Show)
@@ -77,16 +69,11 @@ data MuAssoc
 
 data MuDecl
          = MuTypeDecl    MuName [MuName] MuType
-         | MuDataDecl    MuContext MuName [MuName] [MuConDecl] [MuQName]
+         | MuDataDecl    MuName [MuName] [MuConDecl] [MuQName]
          | MuInfixDecl   MuAssoc Int [MuOp]
-         | MuNewTypeDecl MuContext MuName [MuName] MuConDecl [MuQName]
-         | MuClassDecl   MuContext MuName [MuName] [MuDecl]
-         | MuInstDecl    MuContext MuQName [MuType] [MuDecl]
-         | MuDefaultDecl [MuType]
          | MuTypeSig     [MuName] MuQualType
          | MuFunBind     [MuMatch]
          | MuPatBind     MuPat MuRhs {-where-} [MuDecl]
-         | MuForeignExport String String MuName MuType
   deriving (Eq,Show)
 
 -- | Clauses of a function binding.
@@ -122,16 +109,10 @@ data MuGuardedRhs
          = MuGuardedRhs MuExp MuExp
   deriving (Eq,Show)
 
--- | Safety level for invoking a foreign entity
-data MuSafety
-        = MuSafe        -- ^ call may generate callbacks
-        | MuUnsafe      -- ^ call will not generate callbacks
-  deriving (Eq,Ord,Show)
-
 -- | A type qualified with a context.
 --   An unqualified type has an empty context.
 data MuQualType
-         = MuQualType MuContext MuType
+         = MuQualType MuType
   deriving (Eq,Show)
 
 -- | Haskell types and type constructors.
@@ -142,13 +123,6 @@ data MuType
          | MuTyVar   MuName             -- ^ type variable
          | MuTyCon   MuQName            -- ^ named type or type constructor
   deriving (Eq,Show)
-
-type MuContext = [MuAsst]
-
--- | Class assertions.
---   In Haskell 98, the argument would be a /tyvar/, but this definition
---   allows multiple parameters, and allows them to be /type/s.
-type MuAsst    = (MuQName,[MuType])
 
 -- | /literal/.
 -- Values of this type hold the abstract value of the literal, not the
@@ -222,7 +196,6 @@ data MuExp
 data MuPat
         = MuPVar MuName                 -- ^ variable
         | MuPLit MuLiteral              -- ^ literal constant
-        | MuPNeg MuPat                  -- ^ negated pattern
         | MuPInfixApp MuPat MuQName MuPat
                                         -- ^ pattern with infix data constructor
         | MuPApp MuQName [MuPat]        -- ^ data constructor and argument
@@ -230,10 +203,8 @@ data MuPat
         | MuPTuple [MuPat]              -- ^ tuple pattern
         | MuPList [MuPat]               -- ^ list pattern
         | MuPParen MuPat                -- ^ parenthesized pattern
-        | MuPRec MuQName [MuPatField]   -- ^ labelled pattern
         | MuPAsPat MuName MuPat         -- ^ @\@@-pattern
         | MuPWildCard                   -- ^ wildcard pattern (@_@)
-        | MuPIrrPat MuPat               -- ^ irrefutable pattern (@~@)
   deriving (Eq,Show)
 
 -- | An /fpat/ in a labeled record pattern.
