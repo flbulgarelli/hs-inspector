@@ -47,7 +47,7 @@ mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decl
     --muDecls HsInfixDecl = MuInfixDecl   MuAssoc Int [MuOp]
     muDecls (HsTypeSig _ names _) = map (\name -> MuTypeSig (muName name)) names --MuQualType
     muDecls (HsFunBind equations) = [MuFunBind  (map muEquation equations)]
-    --muDecls HsPatBind = MuPatBind     MuPat MuRhs {-where-} [MuDecl]
+    muDecls (HsPatBind _ (HsPVar name) rhs decls) = [MuPatBind (muName name) (muRhs rhs) (concatMap muDecls decls)]
     muDecls _ = []
 
     muEquation :: HsMatch -> MuMatch
@@ -71,7 +71,7 @@ mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decl
     muPat _ = MuPOther
 
     muExp (HsVar name) = MuVar (muQName name)                 -- ^ variable
-    --muExp HsCon = MuCon MuQName                 -- ^ data constructor
+    muExp (HsCon name) = MuCon (muQName name)                 -- ^ data constructor
     muExp (HsLit lit) = MuLit (muLit lit)
     muExp (HsInfixApp e1 op e2) = MuInfixApp (muExp e1) (muQOp op) (muExp e2)  -- ^ infix application
     muExp (HsApp e1 e2) = MuApp (muExp e1) (muExp e2)             -- ^ ordinary application
@@ -80,9 +80,9 @@ mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decl
     --muExp HsLet = MuLet [MuDecl] MuExp          -- ^ local declarations with @let@
     muExp (HsIf e1 e2 e3) = MuIf (muExp e1) (muExp e2) (muExp e3)
     --muExp HsCase = MuCase MuExp [MuAlt]          -- ^ @case@ /exp/ @of@ /alts/
-    --muExp HsTuple = MuTuple [MuExp]               -- ^ tuple expression
+    muExp (HsTuple elements) = MuTuple (map muExp elements)               -- ^ tuple expression
     muExp (HsList elements) = MuList (map muExp elements)
-    --muExp HsParen = MuParen MuExp                 -- ^ parenthesized expression
+    muExp (HsParen e) = MuParen (muExp e)                 -- ^ parenthesized expression
     --muExp HsEnumFrom = MuEnumFrom MuExp              -- ^ unbounded arithmetic sequence,
                                             -- incrementing by 1
     --muExp HsEnumFromTo = MuEnumFromTo MuExp MuExp      -- ^ bounded arithmetic sequence,
@@ -92,7 +92,7 @@ mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decl
     --muExp HsEnumFromThenTo = MuEnumFromThenTo MuExp MuExp MuExp
                                             -- ^ bounded arithmetic sequence,
                                             -- with first two elements given
-    --muExp HsListComp = MuListComp MuExp [MuStmt]     -- ^ list comprehension
+    muExp (HsListComp exp _) = MuListComp (muExp exp) []     -- ^ list comprehension
     muExp _ = MuExpOther
 
     muLit (HsChar        v) = show v

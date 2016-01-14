@@ -24,7 +24,7 @@ data MuDecl
          | MuDataDecl    String [String] [MuConDecl] [String]
          | MuTypeSig     String -- MuQualType
          | MuFunBind     [MuMatch]
-         | MuPatBind     MuPat MuRhs {-where-} [MuDecl]
+         | MuPatBind     String MuRhs [MuDecl]
   deriving (Eq,Show)
 
 -- | Clauses of a function binding.

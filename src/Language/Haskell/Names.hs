@@ -10,7 +10,7 @@ isName n hsName = hsName == n
 declName :: MuDecl -> String
 declName (MuTypeSig b ) = b
 declName (MuTypeDecl b ) = b
-declName (MuPatBind (MuPVar n) _ _) = n
+declName (MuPatBind n _ _) = n
 declName (MuFunBind cases)  | (MuMatch n _ _ _ ) <- head cases = n
 declName _                  = []
 
