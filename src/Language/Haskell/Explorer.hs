@@ -22,12 +22,12 @@ import Data.List (nub, intercalate)
 import Data.String (IsString(..))
 
 type Binding = String
-type AST = MuModule
+type AST = MuProgram
 
 -- xxxOf functions: take a binding and code
 -- parseXxx functions: take just code
 
-instance IsString MuModule where
+instance IsString MuProgram where
   fromString = astOf
 
 isParseable :: String -> Bool
@@ -37,14 +37,14 @@ isParseable code | ParseOk ast <- parseModule code = True
 astOf :: String -> AST
 astOf code | ParseOk ast <- parseModule code = mu ast
 
-mu :: HsModule -> MuModule
-mu (HsModule _ _ _ _ decls) = (MuModule (concatMap muDecls decls))
+mu :: HsModule -> MuProgram
+mu (HsModule _ _ _ _ decls) = (MuProgram (concatMap muDecls decls))
   where
-    muDecls (HsTypeDecl _ name _ _)      = [MuTypeDecl (muName name)]
-    muDecls (HsDataDecl _ _ name _ _ _ ) = [MuDataDecl (muName name)]
-    muDecls (HsTypeSig _ names _) = map (\name -> MuTypeSig (muName name)) names
-    muDecls (HsFunBind equations) = [MuFunBind  (map muEquation equations)]
-    muDecls (HsPatBind _ (HsPVar name) rhs decls) = [MuPatBind (muName name) (muRhs rhs) (concatMap muDecls decls)]
+    muDecls (HsTypeDecl _ name _ _)      = [MuTypeAlias (muName name)]
+    muDecls (HsDataDecl _ _ name _ _ _ ) = [MuRecordDeclaration (muName name)]
+    muDecls (HsTypeSig _ names _) = map (\name -> MuTypeSignature (muName name)) names
+    muDecls (HsFunBind equations) = [MuFunction  (map muEquation equations)]
+    muDecls (HsPatBind _ (HsPVar name) rhs decls) = [MuConstant (muName name) (muRhs rhs) (concatMap muDecls decls)]
     muDecls _ = []
 
     muEquation :: HsMatch -> MuMatch
@@ -58,12 +58,12 @@ mu (HsModule _ _ _ _ decls) = (MuModule (concatMap muDecls decls))
 
     muPat (HsPVar name) = MuPVar (muName name)                 -- ^ variable
     muPat (HsPLit _) = MuPLit ""              -- ^ literal constant
-    --muPat HsPInfixApp = MuPInfixApp MuPat MuQName MuPat
-    --muPat HsPApp = MuPApp MuQName [MuPat]        -- ^ data constructor and argument
+    --MuPat HsPInfixApp = MuPInfixApp MuPat MuQName MuPat
+    --MuPat HsPApp = MuPApp MuQName [MuPat]        -- ^ data constructor and argument
     muPat (HsPTuple elements) = MuPTuple (map muPat elements)
     muPat (HsPList elements) = MuPList (map muPat elements)
-    --muPat HsPParen = MuPParen MuPat                -- ^ parenthesized pattern
-    --muPat HsPAsPat = MuPAsPat String MuPat
+    --MuPat HsPParen = MuPParen MuPat                -- ^ parenthesized pattern
+    --MuPat HsPAsPat = MuPAsPat String MuPat
     muPat HsPWildCard = MuPWildCard
     muPat _ = MuPOther
 
@@ -74,7 +74,7 @@ mu (HsModule _ _ _ _ decls) = (MuModule (concatMap muDecls decls))
     muExp (HsApp e1 e2) = MuApp (muExp e1) (muExp e2)             -- ^ ordinary application
     muExp (HsNegApp e) = MuApp (MuVar "-") (muExp e)
     muExp (HsLambda _ args exp) = MuLambda (map muPat args) (muExp exp)
-    --muExp HsLet = MuLet [MuDecl] MuExp          -- ^ local declarations with @let@
+    --muExp HsLet = MuLet [MuDeclaration] MuExp          -- ^ local declarations with @let@
     muExp (HsIf e1 e2 e3) = MuIf (muExp e1) (muExp e2) (muExp e3)
     --muExp HsCase = MuCase MuExp [MuAlt]          -- ^ @case@ /exp/ @of@ /alts/
     muExp (HsTuple elements) = MuTuple (map muExp elements)               -- ^ tuple MuExp
@@ -112,7 +112,7 @@ mu (HsModule _ _ _ _ decls) = (MuModule (concatMap muDecls decls))
     muQOp (HsQVarOp name) = muQName name
     muQOp (HsQConOp name) = muQName name
 
-declsOf :: Binding -> AST -> [MuDecl]
+declsOf :: Binding -> AST -> [MuDeclaration]
 declsOf binding = filter (isBinding binding) . parseDecls
 
 rhssOf :: Binding -> AST -> [MuRhs]
@@ -132,8 +132,8 @@ bindingsOf binding code = nub $ do
 transitiveBindingsOf :: Binding -> AST -> [Binding]
 transitiveBindingsOf binding code =  expand (`bindingsOf` code) binding
 
-parseDecls :: AST -> [MuDecl]
-parseDecls (MuModule decls) = decls
+parseDecls :: AST -> [MuDeclaration]
+parseDecls (MuProgram decls) = decls
 
 parseBindings :: AST -> [Binding]
 parseBindings = map declName . parseDecls
@@ -163,12 +163,12 @@ subExpressions (MuIf a b c)       = [a, b, c]
 subExpressions (MuEnum a b c)     = (a : maybeToList b ++ maybeToList c)
 subExpressions _ = []
 
-isBinding :: Binding -> MuDecl -> Bool
+isBinding :: Binding -> MuDeclaration -> Bool
 isBinding binding = (==binding).declName
 
-rhsForBinding :: MuDecl -> [MuRhs]
-rhsForBinding (MuPatBind _ rhs localDecls) = concatRhs rhs localDecls
-rhsForBinding (MuFunBind cases) = cases >>= \(MuMatch _ _ rhs localDecls) -> concatRhs rhs localDecls
+rhsForBinding :: MuDeclaration -> [MuRhs]
+rhsForBinding (MuConstant _ rhs localDecls) = concatRhs rhs localDecls
+rhsForBinding (MuFunction cases) = cases >>= \(MuMatch _ _ rhs localDecls) -> concatRhs rhs localDecls
 rhsForBinding _ = []
 
 concatRhs rhs l = [rhs] ++ concatMap rhsForBinding l

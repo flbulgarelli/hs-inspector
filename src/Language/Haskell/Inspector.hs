@@ -83,17 +83,17 @@ hasBinding binding = not.null.rhssOf binding
 
 hasTypeDeclaration :: Inspection
 hasTypeDeclaration binding = hasDecl f
-  where f (MuTypeDecl hsName) = isName binding hsName
+  where f (MuTypeAlias hsName) = isName binding hsName
         f _                   = False
 
 hasTypeSignature :: Inspection
 hasTypeSignature binding = hasDecl f
-  where f (MuTypeSig hsName)  = isName binding hsName
+  where f (MuTypeSignature hsName)  = isName binding hsName
         f _                       = False
 
 hasAnonymousVariable :: Inspection
 hasAnonymousVariable binding = any f . declsOf binding
-  where f (MuFunBind hsMatches)    = any (any (== MuPWildCard) . p) hsMatches
+  where f (MuFunction hsMatches)    = any (any (== MuPWildCard) . p) hsMatches
         f _                        = False
         p (MuMatch _ params _ _) = params
 
@@ -103,7 +103,7 @@ hasExpression f binding = has f (expressionsOf binding)
 hasRhs :: (MuRhs -> Bool)-> Inspection
 hasRhs f binding = has f (rhssOf binding)
 
-hasDecl :: (MuDecl -> Bool) -> GlobalInspection
+hasDecl :: (MuDeclaration -> Bool) -> GlobalInspection
 hasDecl f = has f parseDecls
 
 -- private

@@ -3,7 +3,7 @@
 module CombinerSpec (spec) where
 
 import           Test.Hspec
-import           Language.Haskell.Explorer
+import           Language.Haskell.Explorer ()
 import           Language.Haskell.Inspector
 import           Language.Haskell.Inspector.Combiner
 

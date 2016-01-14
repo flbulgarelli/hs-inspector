@@ -1,6 +1,6 @@
 module Language.Haskell.Mu (
-    MuModule(..),
-    MuDecl(..),
+    MuProgram(..),
+    MuDeclaration(..),
     MuMatch(..), MuRhs(..), MuGuardedRhs(..),
     MuExp(..), MuStmt(..),
     MuAlt(..), MuGuardedAlts(..), MuGuardedAlt(..),
@@ -8,17 +8,17 @@ module Language.Haskell.Mu (
   ) where
 
 
-data MuModule = MuModule [MuDecl] deriving (Show)
+data MuProgram = MuProgram [MuDeclaration] deriving (Show)
 
-data MuDecl
-         = MuTypeDecl    String
-         | MuDataDecl    String
-         | MuTypeSig     String
-         | MuFunBind     [MuMatch]
-         | MuPatBind     String MuRhs [MuDecl]
+data MuDeclaration
+         = MuTypeAlias    String
+         | MuRecordDeclaration    String
+         | MuTypeSignature     String
+         | MuFunction     [MuMatch]
+         | MuConstant     String MuRhs [MuDeclaration]
   deriving (Eq,Show)
 
-data MuMatch = MuMatch String [MuPat] MuRhs [MuDecl] deriving (Eq,Show)
+data MuMatch = MuMatch String [MuPat] MuRhs [MuDeclaration] deriving (Eq,Show)
 
 data MuRhs
          = MuUnGuardedRhs MuExp -- ^ unguarded right hand side (/exp/)
@@ -37,7 +37,7 @@ data MuExp
         | MuInfixApp MuExp String MuExp  -- ^ infix application
         | MuApp MuExp MuExp             -- ^ ordinary application
         | MuLambda [MuPat] MuExp -- ^ lambda expression
-        | MuLet [MuDecl] MuExp          -- ^ local declarations with @let@
+        | MuLet [MuDeclaration] MuExp          -- ^ local declarations with @let@
         | MuIf MuExp MuExp MuExp        -- ^ @if@ /exp/ @then@ /exp/ @else@ /exp/
         | MuCase MuExp [MuAlt]          -- ^ @case@ /exp/ @of@ /alts/
         | MuTuple [MuExp]               -- ^ tuple expression
@@ -64,10 +64,10 @@ data MuPat
 data MuStmt
         = MuGenerator MuPat MuExp
         | MuQualifier MuExp
-        | MuLetStmt [MuDecl]
+        | MuLetStmt [MuDeclaration]
   deriving (Eq,Show)
 
-data MuAlt = MuAlt MuPat MuGuardedAlts [MuDecl] deriving (Eq,Show)
+data MuAlt = MuAlt MuPat MuGuardedAlts [MuDeclaration] deriving (Eq,Show)
 
 data MuGuardedAlts
         = MuUnGuardedAlt MuExp          -- ^ @->@ /exp/
