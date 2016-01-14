@@ -40,16 +40,17 @@ astOf :: String -> AST
 astOf code | ParseOk ast <- parseModule code = mu ast
 
 mu :: HsModule -> MuModule
-mu (HsModule _ (Module name) _ _ decls) = (MuModule name (map muDecls decls))
+mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decls))
 
 muDecls _ = error "'unimplemented'"
 
-muDecls (HsTypeDecl _ name _ _) = MuTypeDecl (muName name) --MuType
+muDecls (HsTypeDecl _ name _ _) = [MuTypeDecl (muName name)] --MuType
 --muDecls HsDataDecl = MuDataDecl    MuName [MuName] [MuConDecl] [MuQName]
 --muDecls HsInfixDecl = MuInfixDecl   MuAssoc Int [MuOp]
---muDecls HsTypeSig = MuTypeSig     [MuName] MuQualType
+muDecls (HsTypeSig _ names _) = map (\name -> MuTypeSig (muName name)) names --MuQualType
 --muDecls HsFunBind = MuFunBind     [MuMatch]
 --muDecls HsPatBind = MuPatBind     MuPat MuRhs {-where-} [MuDecl]
+muDecls _ = []
 
 muName :: HsName -> String
 muName (HsSymbol n) = n

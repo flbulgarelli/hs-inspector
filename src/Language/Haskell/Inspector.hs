@@ -88,7 +88,7 @@ hasTypeDeclaration binding = hasDecl f
 
 hasTypeSignature :: Inspection
 hasTypeSignature binding = hasDecl f
-  where f (MuTypeSig [hsName] _)  = isName binding hsName
+  where f (MuTypeSig hsName)  = isName binding hsName
         f _                       = False
 
 hasAnonymousVariable :: Inspection

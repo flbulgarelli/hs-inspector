@@ -65,7 +65,7 @@ data MuDecl
          = MuTypeDecl    String -- MuType
          | MuDataDecl    String [String] [MuConDecl] [MuQName]
          | MuInfixDecl   MuAssoc Int [MuOp]
-         | MuTypeSig     [String] MuQualType
+         | MuTypeSig     String -- MuQualType
          | MuFunBind     [MuMatch]
          | MuPatBind     MuPat MuRhs {-where-} [MuDecl]
   deriving (Eq,Show)
