@@ -104,15 +104,7 @@ data MuExp
         | MuTuple [MuExp]               -- ^ tuple expression
         | MuList [MuExp]                -- ^ list expression
         | MuParen MuExp                 -- ^ parenthesized expression
-        | MuEnumFrom MuExp              -- ^ unbounded arithmetic sequence,
-                                        -- incrementing by 1
-        | MuEnumFromTo MuExp MuExp      -- ^ bounded arithmetic sequence,
-                                        -- incrementing by 1
-        | MuEnumFromThen MuExp MuExp    -- ^ unbounded arithmetic sequence,
-                                        -- with first two elements given
-        | MuEnumFromThenTo MuExp MuExp MuExp
-                                        -- ^ bounded arithmetic sequence,
-                                        -- with first two elements given
+        | MuEnum MuExp (Maybe MuExp) (Maybe MuExp)
         | MuListComp MuExp [MuStmt]     -- ^ list comprehension
         | MuExpOther
   deriving (Eq,Show)

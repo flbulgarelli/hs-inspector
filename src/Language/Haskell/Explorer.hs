@@ -83,15 +83,10 @@ mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decl
     muExp (HsTuple elements) = MuTuple (map muExp elements)               -- ^ tuple expression
     muExp (HsList elements) = MuList (map muExp elements)
     muExp (HsParen e) = MuParen (muExp e)                 -- ^ parenthesized expression
-    --muExp HsEnumFrom = MuEnumFrom MuExp              -- ^ unbounded arithmetic sequence,
-                                            -- incrementing by 1
-    --muExp HsEnumFromTo = MuEnumFromTo MuExp MuExp      -- ^ bounded arithmetic sequence,
-                                            -- incrementing by 1
-    --muExp HsEnumFromThen = MuEnumFromThen MuExp MuExp    -- ^ unbounded arithmetic sequence,
-                                            -- with first two elements given
-    --muExp HsEnumFromThenTo = MuEnumFromThenTo MuExp MuExp MuExp
-                                            -- ^ bounded arithmetic sequence,
-                                            -- with first two elements given
+    muExp (HsEnumFrom from)              = MuEnum (muExp from) Nothing Nothing
+    muExp (HsEnumFromTo from to)         = MuEnum (muExp from) Nothing (Just $ muExp to)
+    muExp (HsEnumFromThen from thn)      = MuEnum (muExp from) (Just $ muExp thn) Nothing
+    muExp (HsEnumFromThenTo from thn to) = MuEnum (muExp from) (Just $ muExp thn) (Just $ muExp to)
     muExp (HsListComp exp _) = MuListComp (muExp exp) []     -- ^ list comprehension
     muExp _ = MuExpOther
 
@@ -170,6 +165,7 @@ subExpressions (E (MuListComp a _))   = [E a] --TODO
 subExpressions (E (MuTuple as))       = map (E) as
 subExpressions (E (MuParen a))        = [E a]
 subExpressions (E (MuIf a b c))       = [E a, E b, E c]
+subExpressions (E (MuEnum a b c))     = map (E) (a : maybeToList b ++ maybeToList c)
 subExpressions _ = []
 
 isBinding :: Binding -> MuDecl -> Bool

@@ -67,6 +67,11 @@ spec = do
     it "is False when required function is blank" $ do
       hasUsage "" "y"  "y = m 3" `shouldBe` False
 
+    it "is False when not present in enum" $ do
+      hasUsage "h" "y"  "y = [a..b]" `shouldBe` False
+
+    it "is True when is present in enum" $ do
+      hasUsage "h" "y"  "y = [a..h]" `shouldBe` True
 
   describe "hasDirectRecursion" $ do
     it "is True when has direct recursion in unguarded expresion" $ do
