@@ -46,8 +46,8 @@ hasRedundantLambda = hasExpression f
 -- can be avoided using point-free
 hasRedundantParameter :: Inspection
 hasRedundantParameter binding = any f . declsOf binding
-  where f (MuFunction [
-             MuMatch _ params (MuUnGuardedRhs (MuApp _ (MuVar arg))) _ ]) | (MuPVar param) <- last params = param == arg
+  where f (MuFunction _ [
+             MuEquation params (MuUnGuardedRhs (MuApp _ (MuVar arg))) _ ]) | (MuPVar param) <- last params = param == arg
         f _ = False
 --private
 isBooleanLiteral (MuCon "True")  = True

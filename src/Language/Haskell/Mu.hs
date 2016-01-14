@@ -1,7 +1,7 @@
 module Language.Haskell.Mu (
     MuProgram(..),
     MuDeclaration(..),
-    MuMatch(..), MuRhs(..), MuGuardedRhs(..),
+    MuEquation(..), MuRhs(..), MuGuardedRhs(..),
     MuExp(..), MuStmt(..),
     MuAlt(..), MuGuardedAlts(..), MuGuardedAlt(..),
     MuPat(..)
@@ -14,11 +14,11 @@ data MuDeclaration
          = MuTypeAlias    String
          | MuRecordDeclaration    String
          | MuTypeSignature     String
-         | MuFunction     [MuMatch]
+         | MuFunction  String [MuEquation]
          | MuConstant     String MuRhs [MuDeclaration]
   deriving (Eq,Show)
 
-data MuMatch = MuMatch String [MuPat] MuRhs [MuDeclaration] deriving (Eq,Show)
+data MuEquation = MuEquation [MuPat] MuRhs [MuDeclaration] deriving (Eq,Show)
 
 data MuRhs
          = MuUnGuardedRhs MuExp -- ^ unguarded right hand side (/exp/)

@@ -43,13 +43,14 @@ mu (HsModule _ _ _ _ decls) = (MuProgram (concatMap muDecls decls))
     muDecls (HsTypeDecl _ name _ _)      = [MuTypeAlias (muName name)]
     muDecls (HsDataDecl _ _ name _ _ _ ) = [MuRecordDeclaration (muName name)]
     muDecls (HsTypeSig _ names _) = map (\name -> MuTypeSignature (muName name)) names
-    muDecls (HsFunBind equations) = [MuFunction  (map muEquation equations)]
+    muDecls (HsFunBind equations) | (HsMatch _ name _ _ _) <- head equations =
+                                        [MuFunction (muName name) (map muEquation equations)]
     muDecls (HsPatBind _ (HsPVar name) rhs decls) = [MuConstant (muName name) (muRhs rhs) (concatMap muDecls decls)]
     muDecls _ = []
 
-    muEquation :: HsMatch -> MuMatch
-    muEquation (HsMatch _ name patterns rhs locals) =
-         MuMatch (muName name) (map muPat patterns) (muRhs rhs) (concatMap muDecls locals)
+    muEquation :: HsMatch -> MuEquation
+    muEquation (HsMatch _ _ patterns rhs locals) =
+         MuEquation (map muPat patterns) (muRhs rhs) (concatMap muDecls locals)
 
     muRhs (HsUnGuardedRhs exp)          = MuUnGuardedRhs (muExp exp)
     muRhs (HsGuardedRhss  guards) = MuGuardedRhss (map muGuardedRhs guards)
@@ -168,7 +169,7 @@ isBinding binding = (==binding).declName
 
 rhsForBinding :: MuDeclaration -> [MuRhs]
 rhsForBinding (MuConstant _ rhs localDecls) = concatRhs rhs localDecls
-rhsForBinding (MuFunction cases) = cases >>= \(MuMatch _ _ rhs localDecls) -> concatRhs rhs localDecls
+rhsForBinding (MuFunction _ cases) = cases >>= \(MuEquation _ rhs localDecls) -> concatRhs rhs localDecls
 rhsForBinding _ = []
 
 concatRhs rhs l = [rhs] ++ concatMap rhsForBinding l

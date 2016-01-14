@@ -93,9 +93,9 @@ hasTypeSignature binding = hasDecl f
 
 hasAnonymousVariable :: Inspection
 hasAnonymousVariable binding = any f . declsOf binding
-  where f (MuFunction hsMatches)    = any (any (== MuPWildCard) . p) hsMatches
+  where f (MuFunction _ hsMatches)    = any (any (== MuPWildCard) . p) hsMatches
         f _                        = False
-        p (MuMatch _ params _ _) = params
+        p (MuEquation params _ _) = params
 
 hasExpression :: (MuExp -> Bool) -> Inspection
 hasExpression f binding = has f (expressionsOf binding)
