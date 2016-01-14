@@ -9,7 +9,7 @@ module Language.Haskell.Explorer (
   expressionsOf,
   expressionToBinding,
   isParseable,
-  Expression(..),
+  MuExp(..),
   Binding,
   AST) where
 
@@ -23,8 +23,6 @@ import Data.String (IsString(..))
 
 type Binding = String
 type AST = MuModule
-
-data Expression = E MuExp | O String
 
 -- xxxOf functions: take a binding and code
 -- parseXxx functions: take just code
@@ -79,9 +77,9 @@ mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decl
     --muExp HsLet = MuLet [MuDecl] MuExp          -- ^ local declarations with @let@
     muExp (HsIf e1 e2 e3) = MuIf (muExp e1) (muExp e2) (muExp e3)
     --muExp HsCase = MuCase MuExp [MuAlt]          -- ^ @case@ /exp/ @of@ /alts/
-    muExp (HsTuple elements) = MuTuple (map muExp elements)               -- ^ tuple expression
+    muExp (HsTuple elements) = MuTuple (map muExp elements)               -- ^ tuple MuExp
     muExp (HsList elements) = MuList (map muExp elements)
-    muExp (HsParen e) = MuParen (muExp e)                 -- ^ parenthesized expression
+    muExp (HsParen e) = MuParen (muExp e)                 -- ^ parenthesized MuExp
     muExp (HsEnumFrom from)              = MuEnum (muExp from) Nothing Nothing
     muExp (HsEnumFromTo from to)         = MuEnum (muExp from) Nothing (Just $ muExp to)
     muExp (HsEnumFromThen from thn)      = MuEnum (muExp from) (Just $ muExp thn) Nothing
@@ -120,7 +118,7 @@ declsOf binding = filter (isBinding binding) . parseDecls
 rhssOf :: Binding -> AST -> [MuRhs]
 rhssOf binding = concatMap rhsForBinding . declsOf binding
 
-expressionsOf :: Binding -> AST -> [Expression]
+expressionsOf :: Binding -> AST -> [MuExp]
 expressionsOf binding code = do
   rhs <- rhssOf binding code
   top <- topExpressions rhs
@@ -140,30 +138,29 @@ parseDecls (MuModule _ decls) = decls
 parseBindings :: AST -> [Binding]
 parseBindings = map declName . parseDecls
 
-expressionToBinding :: Expression -> Maybe Binding
-expressionToBinding (O q) = Just q
-expressionToBinding (E (MuVar    q)) = Just q
+expressionToBinding :: MuExp -> Maybe Binding
+expressionToBinding (MuVar    q) = Just q
 expressionToBinding _                = Nothing
 
 -- private
 
-topExpressions :: MuRhs -> [Expression]
-topExpressions (MuUnGuardedRhs e) = [E e]
-topExpressions (MuGuardedRhss rhss) = rhss >>= \(MuGuardedRhs es1 es2) -> [E es1, E es2]
+topExpressions :: MuRhs -> [MuExp]
+topExpressions (MuUnGuardedRhs e) = [e]
+topExpressions (MuGuardedRhss rhss) = rhss >>= \(MuGuardedRhs es1 es2) -> [es1, es2]
 
-unfoldExpression :: Expression -> [Expression]
+unfoldExpression :: MuExp -> [MuExp]
 unfoldExpression expr = expr : concatMap unfoldExpression (subExpressions expr)
 
-subExpressions :: Expression -> [Expression]
-subExpressions (E (MuInfixApp a b c)) = [E a, O b, E c]
-subExpressions (E (MuApp a b))        = [E a, E b]
-subExpressions (E (MuList as))        = map (E) as
-subExpressions (E (MuLambda _ a))   = [E a]
-subExpressions (E (MuListComp a _))   = [E a] --TODO
-subExpressions (E (MuTuple as))       = map (E) as
-subExpressions (E (MuParen a))        = [E a]
-subExpressions (E (MuIf a b c))       = [E a, E b, E c]
-subExpressions (E (MuEnum a b c))     = map (E) (a : maybeToList b ++ maybeToList c)
+subExpressions :: MuExp -> [MuExp]
+subExpressions (MuInfixApp a b c) = [a, (MuVar b), c]
+subExpressions (MuApp a b)        = [a, b]
+subExpressions (MuLambda _ a)   = [a]
+subExpressions (MuList as)      = as
+subExpressions (MuListComp a _)   = [a] --TODO
+subExpressions (MuTuple as)      = as
+subExpressions (MuParen a)       = [a]
+subExpressions (MuIf a b c)       = [a, b, c]
+subExpressions (MuEnum a b c)     = (a : maybeToList b ++ maybeToList c)
 subExpressions _ = []
 
 isBinding :: Binding -> MuDecl -> Bool

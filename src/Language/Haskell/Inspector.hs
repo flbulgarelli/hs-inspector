@@ -29,7 +29,7 @@ type GlobalInspection = AST  -> Bool
 -- in its definition
 hasComposition :: Inspection
 hasComposition = hasExpression f
-  where f (O ".") = True
+  where f (MuVar ".") = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses guards
@@ -43,7 +43,7 @@ hasGuards = hasRhs f
 -- in its definition
 hasIf :: Inspection
 hasIf = hasExpression f
-  where f (E (MuIf _ _ _)) = True
+  where f (MuIf _ _ _) = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses ifs or guards
@@ -55,7 +55,7 @@ hasConditional target code = hasIf target code || hasGuards target code
 -- in its definition
 hasLambda :: Inspection
 hasLambda = hasExpression f
-  where f (E (MuLambda _ _)) = True
+  where f (MuLambda _ _) = True
         f _ = False
 
 
@@ -74,7 +74,7 @@ hasUsage target = hasExpression f
 -- in its definition
 hasComprehension :: Inspection
 hasComprehension = hasExpression f
-  where f (E (MuListComp _ _)) = True
+  where f (MuListComp _ _) = True
         f _ = False
 
 -- | Inspection that tells whether a top level binding exists
@@ -97,7 +97,7 @@ hasAnonymousVariable binding = any f . declsOf binding
         f _                        = False
         p (MuMatch _ params _ _) = params
 
-hasExpression :: (Expression -> Bool) -> Inspection
+hasExpression :: (MuExp -> Bool) -> Inspection
 hasExpression f binding = has f (expressionsOf binding)
 
 hasRhs :: (MuRhs -> Bool)-> Inspection

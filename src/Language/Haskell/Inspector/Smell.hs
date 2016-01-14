@@ -13,7 +13,7 @@ import Language.Haskell.Inspector
 -- | Inspection that tells whether a binding has expressions like 'x == True'
 hasRedundantBooleanComparison :: Inspection
 hasRedundantBooleanComparison = hasExpression f
-  where f (E (MuInfixApp x c y)) = any isBooleanLiteral [x, y] && isComp c
+  where f (MuInfixApp x c y) = any isBooleanLiteral [x, y] && isComp c
         f _ = False
 
         isComp c = c == "==" || c == "/="
@@ -22,7 +22,7 @@ hasRedundantBooleanComparison = hasExpression f
 -- boolean literals
 hasRedundantIf :: Inspection
 hasRedundantIf = hasExpression f
-  where f (E (MuIf _ x y)) = all isBooleanLiteral [x, y]
+  where f (MuIf _ x y) = all isBooleanLiteral [x, y]
         f _            = False
 
 
@@ -39,7 +39,7 @@ hasRedundantGuards = hasRhs f -- TODO not true when condition is a pattern
 -- | Inspection that tells whether a binding has lambda expressions like '\x -> g x'
 hasRedundantLambda :: Inspection
 hasRedundantLambda = hasExpression f
-  where f (E (MuLambda [MuPVar (x)] (MuApp _ (MuVar (y))))) = x == y
+  where f (MuLambda [MuPVar (x)] (MuApp _ (MuVar (y)))) = x == y
         f _ = False -- TODO consider parenthesis and symbols
 
 -- | Inspection that tells whether a binding has parameters that
