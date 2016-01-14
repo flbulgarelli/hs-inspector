@@ -6,7 +6,7 @@ module Language.Haskell.Inspector.Combiner (
 import Language.Haskell.Inspector
 import Language.Haskell.Explorer
 
-detect :: Inspection -> Code -> [Binding]
+detect :: Inspection -> AST -> [Binding]
 detect inspection code = filter (`inspection` code) $ parseBindings code
 
 negative :: Inspection -> Inspection

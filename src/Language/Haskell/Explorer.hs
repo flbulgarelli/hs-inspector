@@ -1,4 +1,5 @@
 module Language.Haskell.Explorer (
+  astOf,
   parseDecls,
   parseBindings,
   declsOf,
@@ -7,50 +8,60 @@ module Language.Haskell.Explorer (
   transitiveBindingsOf,
   expressionsOf,
   expressionToBinding,
+  isParseable,
   Expression(..),
   Binding,
-  Code) where
+  AST) where
 
 import Language.Haskell.Syntax
 import Language.Haskell.Names
 import Language.Haskell.Parser
 import Data.Maybe (maybeToList)
 import Data.List (nub)
+import Data.String (IsString(..))
 
 type Binding = String
-type Code = String
+type AST = HsModule
 
 data Expression = E HsExp | O HsQOp
 
 -- xxxOf functions: take a binding and code
 -- parseXxx functions: take just code
 
-declsOf :: Binding -> Code -> [HsDecl]
+instance IsString HsModule where
+  fromString = astOf
+
+isParseable :: String -> Bool
+isParseable code | ParseOk ast <- parseModule code = True
+                 | otherwise = False
+
+astOf :: String -> AST
+astOf code | ParseOk ast <- parseModule code = ast
+
+declsOf :: Binding -> AST -> [HsDecl]
 declsOf binding = filter (isBinding binding) . parseDecls
 
-rhssOf :: Binding -> Code -> [HsRhs]
+rhssOf :: Binding -> AST -> [HsRhs]
 rhssOf binding = concatMap rhsForBinding . declsOf binding
 
-expressionsOf :: Binding -> Code -> [Expression]
+expressionsOf :: Binding -> AST -> [Expression]
 expressionsOf binding code = do
   rhs <- rhssOf binding code
   top <- topExpressions rhs
   unfoldExpression top
 
-bindingsOf :: Binding -> Code -> [Binding]
+bindingsOf :: Binding -> AST -> [Binding]
 bindingsOf binding code = nub $ do
           expr <- expressionsOf binding code
           maybeToList . expressionToBinding $ expr
 
-transitiveBindingsOf :: Binding -> Code -> [Binding]
+transitiveBindingsOf :: Binding -> AST -> [Binding]
 transitiveBindingsOf binding code =  expand (`bindingsOf` code) binding
 
-parseDecls :: Code -> [HsDecl]
-parseDecls code
-  | ParseOk (HsModule _ _ _ _ decls) <- parseModule code = decls
-  | otherwise = []
+parseDecls :: AST -> [HsDecl]
+parseDecls (HsModule _ _ _ _ decls) = decls
 
-parseBindings :: Code -> [Binding]
+parseBindings :: AST -> [Binding]
 parseBindings = map declName . parseDecls
 
 expressionToBinding :: Expression -> Maybe Binding

@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module ExplorerSpec (spec) where
 
 import           Test.Hspec

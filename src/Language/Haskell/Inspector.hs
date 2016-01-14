@@ -14,7 +14,6 @@ module Language.Haskell.Inspector (
   hasExpression,
   hasDecl,
   hasRhs,
-  isParseable,
   Inspection,
   GlobalInspection
   ) where
@@ -23,8 +22,8 @@ import  Language.Haskell.Syntax
 import  Language.Haskell.Names (isName)
 import  Language.Haskell.Explorer
 
-type Inspection = Binding -> Code  -> Bool
-type GlobalInspection = Code  -> Bool
+type Inspection = Binding -> AST  -> Bool
+type GlobalInspection = AST  -> Bool
 
 -- | Inspection that tells whether a binding uses the composition operator '.'
 -- in its definition
@@ -103,9 +102,6 @@ hasExpression f binding = has f (expressionsOf binding)
 
 hasRhs :: (HsRhs -> Bool)-> Inspection
 hasRhs f binding = has f (rhssOf binding)
-
-isParseable :: GlobalInspection
-isParseable = not.null.parseDecls
 
 hasDecl :: (HsDecl -> Bool) -> GlobalInspection
 hasDecl f = has f parseDecls

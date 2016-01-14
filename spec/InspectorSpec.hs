@@ -1,7 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module InspectorSpec (spec) where
 
 import           Test.Hspec
 import           Language.Haskell.Inspector
+import           Language.Haskell.Explorer
 
 spec :: Spec
 spec = do
@@ -27,9 +30,6 @@ spec = do
 
       it "is False when binding doesnt exists" $ do
         hasBinding "y"  "x = 1" `shouldBe` False
-
-      it "is False when code is unparseable" $ do
-        hasBinding "y"  "7" `shouldBe` False
 
     describe "with functions" $ do
       it "is True when binding exists" $ do
@@ -133,7 +133,7 @@ spec = do
                       \    | otherwise = 4"  `shouldBe` True
 
       it "is present" $ do
-        hasGuards "f" "f x = c x = 2"  `shouldBe` False
+        hasGuards "f" "f x = c x == 2"  `shouldBe` False
 
   describe "hasIf" $ do
     it "is True when present" $ do
@@ -160,6 +160,6 @@ spec = do
       hasAnonymousVariable "foo" "foo x = 1" `shouldBe` False
 
     it "is False if _ is present only in seccond equation" $ do
-      let code = unlines ["foo False bool = bool", "foo True _ = True"]
+      let code = astOf . unlines $ ["foo False bool = bool", "foo True _ = True"]
       hasAnonymousVariable "foo" code `shouldBe` True
 
