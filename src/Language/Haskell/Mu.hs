@@ -42,7 +42,6 @@ data MuExp
         | MuCase MuExp [MuAlt]          -- ^ @case@ /exp/ @of@ /alts/
         | MuTuple [MuExp]               -- ^ tuple expression
         | MuList [MuExp]                -- ^ list expression
-        | MuParen MuExp                 -- ^ parenthesized expression
         | MuEnum MuExp (Maybe MuExp) (Maybe MuExp)
         | MuListComp MuExp [MuStmt]     -- ^ list comprehension
         | MuExpOther
@@ -55,7 +54,6 @@ data MuPat
         | MuPApp String [MuPat]        -- ^ data constructor and argument
         | MuPTuple [MuPat]              -- ^ tuple pattern
         | MuPList [MuPat]               -- ^ list pattern
-        | MuPParen MuPat                -- ^ parenthesized pattern
         | MuPAsPat String MuPat         -- ^ @\@@-pattern
         | MuPWildCard                   -- ^ wildcard pattern (@_@)
         | MuPOther
