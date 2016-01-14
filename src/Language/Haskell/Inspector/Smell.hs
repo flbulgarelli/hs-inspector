@@ -13,7 +13,7 @@ import Language.Haskell.Inspector
 -- | Inspection that tells whether a binding has expressions like 'x == True'
 hasRedundantBooleanComparison :: Inspection
 hasRedundantBooleanComparison = hasExpression f
-  where f (E (MuInfixApp x (MuQVarOp c) y)) = any isBooleanLiteral [x, y] && isComp c
+  where f (E (MuInfixApp x c y)) = any isBooleanLiteral [x, y] && isComp c
         f _ = False
 
         isComp c = c == "==" || c == "/="

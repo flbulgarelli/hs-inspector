@@ -29,7 +29,7 @@ type GlobalInspection = AST  -> Bool
 -- in its definition
 hasComposition :: Inspection
 hasComposition = hasExpression f
-  where f (O (MuQVarOp ".")) = True
+  where f (O ".") = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses guards

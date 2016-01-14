@@ -24,7 +24,7 @@ import Data.String (IsString(..))
 type Binding = String
 type AST = MuModule
 
-data Expression = E MuExp | O MuQOp
+data Expression = E MuExp | O String
 
 -- xxxOf functions: take a binding and code
 -- parseXxx functions: take just code
@@ -73,18 +73,16 @@ mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decl
     muExp (HsVar name) = MuVar (muQName name)                 -- ^ variable
     --muExp HsCon = MuCon MuQName                 -- ^ data constructor
     muExp (HsLit lit) = MuLit (muLit lit)
-    --muExp HsInfixApp = MuInfixApp MuExp MuQOp MuExp  -- ^ infix application
-    --muExp HsApp = MuApp MuExp MuExp             -- ^ ordinary application
-    --muExp HsNegApp = MuNegApp MuExp                -- ^ negation expression @-@ /exp/
-    --muExp HsLambda = MuLambda [MuPat] MuExp -- ^ lambda expression
+    muExp (HsInfixApp e1 op e2) = MuInfixApp (muExp e1) (muQOp op) (muExp e2)  -- ^ infix application
+    muExp (HsApp e1 e2) = MuApp (muExp e1) (muExp e2)             -- ^ ordinary application
+    muExp (HsNegApp e) = MuNegApp (muExp e)                -- ^ negation expression @-@ /exp/
+    muExp (HsLambda _ args exp) = MuLambda (map muPat args) (muExp exp)
     --muExp HsLet = MuLet [MuDecl] MuExp          -- ^ local declarations with @let@
-    --muExp HsIf = MuIf MuExp MuExp MuExp        -- ^ @if@ /exp/ @then@ /exp/ @else@ /exp/
+    muExp (HsIf e1 e2 e3) = MuIf (muExp e1) (muExp e2) (muExp e3)
     --muExp HsCase = MuCase MuExp [MuAlt]          -- ^ @case@ /exp/ @of@ /alts/
     --muExp HsTuple = MuTuple [MuExp]               -- ^ tuple expression
-    --muExp HsList = MuList [MuExp]                -- ^ list expression
+    muExp (HsList elements) = MuList (map muExp elements)
     --muExp HsParen = MuParen MuExp                 -- ^ parenthesized expression
-    --muExp HsLeftSection = MuLeftSection MuExp MuQOp     -- ^ left section @(@/exp/ /qop/@)@
-    --muExp HsRightSection = MuRightSection MuQOp MuExp    -- ^ right section @(@/qop/ /exp/@)@
     --muExp HsEnumFrom = MuEnumFrom MuExp              -- ^ unbounded arithmetic sequence,
                                             -- incrementing by 1
     --muExp HsEnumFromTo = MuEnumFromTo MuExp MuExp      -- ^ bounded arithmetic sequence,
@@ -119,6 +117,9 @@ mu (HsModule _ (Module name) _ _ decls) = (MuModule name (concatMap muDecls decl
     muQName (Special (HsTupleCon times)) =  intercalate "" . replicate times $ ","
     muQName (Special (HsCons)) =  ":"
 
+    muQOp (HsQVarOp name) = muQName name
+    muQOp (HsQConOp name) = muQName name
+
 declsOf :: Binding -> AST -> [MuDecl]
 declsOf binding = filter (isBinding binding) . parseDecls
 
@@ -146,7 +147,7 @@ parseBindings :: AST -> [Binding]
 parseBindings = map declName . parseDecls
 
 expressionToBinding :: Expression -> Maybe Binding
-expressionToBinding (O (MuQVarOp q)) = Just q
+expressionToBinding (O q) = Just q
 expressionToBinding (E (MuVar    q)) = Just q
 expressionToBinding _                = Nothing
 

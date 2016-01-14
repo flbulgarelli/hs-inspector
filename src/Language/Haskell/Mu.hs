@@ -13,22 +13,9 @@ module Language.Haskell.Mu (
     -- * Patterns
     MuPat(..), MuPatField(..),
     -- * Variables, Constructors and Operators
-    MuQOp(..), MuOp(..)
   ) where
 
 
-data MuQOp
-        = MuQVarOp String      -- ^ variable operator (/qvarop/)
-        | MuQConOp String      -- ^ constructor operator (/qconop/)
-  deriving (Eq,Ord,Show)
-
--- | Operators, appearing in @infix@ declarations.
-data MuOp
-        = MuVarOp String        -- ^ variable operator (/varop/)
-        | MuConOp String        -- ^ constructor operator (/conop/)
-  deriving (Eq,Ord,Show)
-
--- | A Haskell source module.
 data MuModule = MuModule String [MuDecl]
   deriving (Show)
 
@@ -107,7 +94,7 @@ data MuExp
         = MuVar String                 -- ^ variable
         | MuCon String                 -- ^ data constructor
         | MuLit String               -- ^ literal constant
-        | MuInfixApp MuExp MuQOp MuExp  -- ^ infix application
+        | MuInfixApp MuExp String MuExp  -- ^ infix application
         | MuApp MuExp MuExp             -- ^ ordinary application
         | MuNegApp MuExp                -- ^ negation expression @-@ /exp/
         | MuLambda [MuPat] MuExp -- ^ lambda expression
@@ -117,8 +104,6 @@ data MuExp
         | MuTuple [MuExp]               -- ^ tuple expression
         | MuList [MuExp]                -- ^ list expression
         | MuParen MuExp                 -- ^ parenthesized expression
-        | MuLeftSection MuExp MuQOp     -- ^ left section @(@/exp/ /qop/@)@
-        | MuRightSection MuQOp MuExp    -- ^ right section @(@/qop/ /exp/@)@
         | MuEnumFrom MuExp              -- ^ unbounded arithmetic sequence,
                                         -- incrementing by 1
         | MuEnumFromTo MuExp MuExp      -- ^ bounded arithmetic sequence,
