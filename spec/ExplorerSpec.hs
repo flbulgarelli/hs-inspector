@@ -81,4 +81,14 @@ spec = do
 
       comprehension `shouldBe` application
 
+    it "converts comprehensions into binds and returns 11" $ do
+      let (MuProgram [MuConstant _ (MuUnGuardedRhs comprehension) _]) = "m = [ g x | m <- ms, x <- f m ]"
+      let (MuProgram [MuConstant _ (MuUnGuardedRhs application)   _]) = "m = ms >>= \\m -> (f m) >>= \\x -> return (g x)"
 
+      comprehension `shouldBe` application
+
+    it "converts comprehensions into binds and returns 12" $ do
+      let (MuProgram [MuConstant _ (MuUnGuardedRhs comprehension) _]) = "m = [x | (x:xs) <- xs ]"
+      let (MuProgram [MuConstant _ (MuUnGuardedRhs application)   _]) = "m = xs >>= (\\(x:xs) -> return x)"
+
+      comprehension `shouldBe` application

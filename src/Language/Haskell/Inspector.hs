@@ -6,7 +6,6 @@ module Language.Haskell.Inspector (
   hasLambda,
   hasDirectRecursion,
   hasUsage,
-  hasComprehension,
   hasBinding,
   hasTypeDeclaration,
   hasTypeSignature,
@@ -69,13 +68,6 @@ hasUsage :: String -> Inspection
 hasUsage target = hasExpression f
   where f expr | (Just n) <- expressionToBinding expr = n == target
                | otherwise = False
-
--- | Inspection that tells whether a binding uses lists comprehensions
--- in its definition
-hasComprehension :: Inspection
-hasComprehension = hasExpression f
-  where f (MuListComp _ _) = True
-        f _ = False
 
 -- | Inspection that tells whether a top level binding exists
 hasBinding :: Inspection

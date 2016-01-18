@@ -91,8 +91,9 @@ mu (HsModule _ _ _ _ decls) = (MuProgram (concatMap muDecls decls))
                             where
                                 muStmt :: [HsStmt] -> HsExp -> MuExp
                                 muStmt []     exp = MuApp (MuVar "return") (muExp exp)
-                                muStmt (HsGenerator _ (HsPVar element) (HsVar list):xs) exp =
-                                  MuInfixApp (MuVar (muQName list)) ">>=" (MuLambda [MuPVar (muName element)] (muStmt xs exp))
+                                muStmt (HsGenerator _ element list:xs) exp =
+                                  MuInfixApp (muExp list) ">>=" (MuLambda [muPat element] (muStmt xs exp))
+
     muExp _ = MuExpOther
 
     muLit (HsChar        v) = MuString [v]
@@ -164,7 +165,6 @@ subExpressions (MuInfixApp a b c) = [a, (MuVar b), c]
 subExpressions (MuApp a b)        = [a, b]
 subExpressions (MuLambda _ a)   = [a]
 subExpressions (MuList as)      = as
-subExpressions (MuListComp a _)   = [a] --TODO
 subExpressions (MuTuple as)      = as
 subExpressions (MuIf a b c)       = [a, b, c]
 subExpressions _ = []

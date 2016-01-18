@@ -11,6 +11,6 @@ declName :: MuDeclaration -> String
 declName (MuTypeSignature b ) = b
 declName (MuTypeAlias b ) = b
 declName (MuConstant n _ _) = n
-declName (MuFunction n cases)  = n
+declName (MuFunction n _)  = n
 declName _                  = []
 

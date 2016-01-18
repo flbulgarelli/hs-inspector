@@ -42,7 +42,6 @@ data MuExp
         | MuCase MuExp [MuAlt]
         | MuTuple [MuExp]
         | MuList [MuExp]
-        | MuListComp MuExp [MuStmt]
         | MuExpOther
   deriving (Eq,Show)
 
