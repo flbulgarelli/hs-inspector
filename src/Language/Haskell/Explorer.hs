@@ -87,6 +87,7 @@ mu (HsModule _ _ _ _ decls) = (MuProgram (concatMap muDecls decls))
     muExp (HsEnumFromTo from to)         = MuApp (MuApp (MuVar "enumFromTo") (muExp from)) (muExp to)
     muExp (HsEnumFromThen from thn)      = MuApp (MuApp (MuVar "enumFromThen") (muExp from)) (muExp thn)
     muExp (HsEnumFromThenTo from thn to) = MuApp (MuApp (MuApp (MuVar "enumFromThenTo") (muExp from)) (muExp thn)) (muExp to)
+    muExp (HsListComp exp stmts)         = MuListComp (muExp exp) (map muStmt stmts)
     muExp _ = MuExpOther
 
     muLit (HsChar        v) = MuString [v]
@@ -113,6 +114,9 @@ mu (HsModule _ _ _ _ decls) = (MuProgram (concatMap muDecls decls))
 
     muQOp (HsQVarOp name) = muQName name
     muQOp (HsQConOp name) = muQName name
+
+    muStmt (HsGenerator _ pat exp) = MuGenerator (muPat pat) (muExp exp)
+    muStmt (HsQualifier exp) = MuQualifier (muExp exp)
 
 declsOf :: Binding -> AST -> [MuDeclaration]
 declsOf binding = filter (isBinding binding) . parseDecls
