@@ -4,6 +4,7 @@ module ExplorerSpec (spec) where
 
 import           Test.Hspec
 import           Language.Haskell.Explorer
+import           Language.Haskell.Mu
 
 spec :: Spec
 spec = do

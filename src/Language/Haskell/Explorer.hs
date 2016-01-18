@@ -68,8 +68,10 @@ mu (HsModule _ _ _ _ decls) = (MuProgram (concatMap muDecls decls))
     muPat HsPWildCard = MuPWildCard
     muPat _ = MuPOther
 
-    muExp (HsVar name) = MuVar (muQName name)                 -- ^ variable
-    muExp (HsCon name) = MuCon (muQName name)                 -- ^ data constructor
+    muExp (HsVar name) = MuVar (muQName name)
+    muExp (HsCon (UnQual (HsIdent "True")))  = MuLit (MuBool True)
+    muExp (HsCon (UnQual (HsIdent "False"))) = MuLit (MuBool False)
+    muExp (HsCon name)                       = MuVar (muQName name)
     muExp (HsLit lit) = MuLit (muLit lit)
     muExp (HsInfixApp e1 op e2) = MuInfixApp (muExp e1) (muQOp op) (muExp e2)  -- ^ infix application
     muExp (HsApp e1 e2) = MuApp (muExp e1) (muExp e2)             -- ^ ordinary application
@@ -81,22 +83,21 @@ mu (HsModule _ _ _ _ decls) = (MuProgram (concatMap muDecls decls))
     muExp (HsTuple elements) = MuTuple (map muExp elements)               -- ^ tuple MuExp
     muExp (HsList elements) = MuList (map muExp elements)
     muExp (HsParen e) = (muExp e)
-    muExp (HsEnumFrom from)              = MuEnum (muExp from) Nothing Nothing
-    muExp (HsEnumFromTo from to)         = MuEnum (muExp from) Nothing (Just $ muExp to)
-    muExp (HsEnumFromThen from thn)      = MuEnum (muExp from) (Just $ muExp thn) Nothing
-    muExp (HsEnumFromThenTo from thn to) = MuEnum (muExp from) (Just $ muExp thn) (Just $ muExp to)
-    muExp (HsListComp exp _) = MuListComp (muExp exp) []     -- ^ list comprehension
+    muExp (HsEnumFrom from)              = MuApp (MuVar "enumFrom") (muExp from)
+    muExp (HsEnumFromTo from to)         = MuApp (MuApp (MuVar "enumFromTo") (muExp from)) (muExp to)
+    muExp (HsEnumFromThen from thn)      = MuApp (MuApp (MuVar "enumFromThen") (muExp from)) (muExp thn)
+    muExp (HsEnumFromThenTo from thn to) = MuApp (MuApp (MuApp (MuVar "enumFromThenTo") (muExp from)) (muExp thn)) (muExp to)
     muExp _ = MuExpOther
 
-    muLit (HsChar        v) = show v
-    muLit (HsString      v) = show v
-    muLit (HsInt         v) = show v
-    muLit (HsFrac        v) = show v
-    muLit (HsCharPrim    v) = show v
-    muLit (HsStringPrim  v) = show v
-    muLit (HsIntPrim     v) = show v
-    muLit (HsFloatPrim   v) = show v
-    muLit (HsDoublePrim  v) = show v
+    muLit (HsChar        v) = MuString [v]
+    muLit (HsString      v) = MuString v
+    muLit (HsInt         v) = MuInteger v
+    muLit (HsFrac        v) = MuFloat v
+    muLit (HsCharPrim    v) = MuString [v]
+    muLit (HsStringPrim  v) = MuString v
+    muLit (HsIntPrim     v) = MuInteger v
+    muLit (HsFloatPrim   v) = MuFloat v
+    muLit (HsDoublePrim  v) = MuFloat v
 
     muName :: HsName -> String
     muName (HsSymbol n) = n
@@ -160,7 +161,6 @@ subExpressions (MuList as)      = as
 subExpressions (MuListComp a _)   = [a] --TODO
 subExpressions (MuTuple as)      = as
 subExpressions (MuIf a b c)       = [a, b, c]
-subExpressions (MuEnum a b c)     = (a : maybeToList b ++ maybeToList c)
 subExpressions _ = []
 
 isBinding :: Binding -> MuDeclaration -> Bool

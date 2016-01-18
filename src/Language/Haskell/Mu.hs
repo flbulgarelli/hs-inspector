@@ -4,46 +4,45 @@ module Language.Haskell.Mu (
     MuEquation(..), MuRhs(..), MuGuardedRhs(..),
     MuExp(..), MuStmt(..),
     MuAlt(..), MuGuardedAlts(..), MuGuardedAlt(..),
-    MuPat(..)
+    MuPat(..),
+    MuLitValue(..)
   ) where
 
 
 data MuProgram = MuProgram [MuDeclaration] deriving (Show)
 
+type MuId = String
+
+
 data MuDeclaration
-         = MuTypeAlias    String
-         | MuRecordDeclaration    String
-         | MuTypeSignature     String
-         | MuFunction  String [MuEquation]
-         | MuConstant     String MuRhs [MuDeclaration]
+         = MuTypeAlias MuId
+         | MuRecordDeclaration MuId
+         | MuTypeSignature MuId
+         | MuFunction MuId [MuEquation]
+         | MuConstant MuId MuRhs [MuDeclaration]
   deriving (Eq,Show)
 
 data MuEquation = MuEquation [MuPat] MuRhs [MuDeclaration] deriving (Eq,Show)
 
 data MuRhs
-         = MuUnGuardedRhs MuExp -- ^ unguarded right hand side (/exp/)
+         = MuUnGuardedRhs MuExp
          | MuGuardedRhss  [MuGuardedRhs]
-                                -- ^ guarded right hand side (/gdrhs/)
   deriving (Eq,Show)
 
-data MuGuardedRhs
-         = MuGuardedRhs MuExp MuExp
-  deriving (Eq,Show)
+data MuGuardedRhs = MuGuardedRhs MuExp MuExp deriving (Eq,Show)
 
 data MuExp
-        = MuVar String                 -- ^ variable
-        | MuCon String                 -- ^ data constructor
-        | MuLit String               -- ^ literal constant
-        | MuInfixApp MuExp String MuExp  -- ^ infix application
-        | MuApp MuExp MuExp             -- ^ ordinary application
-        | MuLambda [MuPat] MuExp -- ^ lambda expression
+        = MuVar MuId
+        | MuLit MuLitValue
+        | MuInfixApp MuExp String MuExp
+        | MuApp MuExp MuExp
+        | MuLambda [MuPat] MuExp
         | MuLet [MuDeclaration] MuExp          -- ^ local declarations with @let@
-        | MuIf MuExp MuExp MuExp        -- ^ @if@ /exp/ @then@ /exp/ @else@ /exp/
-        | MuCase MuExp [MuAlt]          -- ^ @case@ /exp/ @of@ /alts/
-        | MuTuple [MuExp]               -- ^ tuple expression
-        | MuList [MuExp]                -- ^ list expression
-        | MuEnum MuExp (Maybe MuExp) (Maybe MuExp)
-        | MuListComp MuExp [MuStmt]     -- ^ list comprehension
+        | MuIf MuExp MuExp MuExp
+        | MuCase MuExp [MuAlt]
+        | MuTuple [MuExp]
+        | MuList [MuExp]
+        | MuListComp MuExp [MuStmt]
         | MuExpOther
   deriving (Eq,Show)
 
@@ -73,3 +72,10 @@ data MuGuardedAlts
   deriving (Eq,Show)
 
 data MuGuardedAlt = MuGuardedAlt MuExp MuExp deriving (Eq,Show)
+
+data MuLitValue
+          = MuBool Bool
+          | MuInteger Integer
+          | MuFloat Rational
+          | MuString String
+    deriving (Eq,Show)

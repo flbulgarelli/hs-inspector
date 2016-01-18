@@ -49,7 +49,6 @@ hasRedundantParameter binding = any f . declsOf binding
   where f (MuFunction _ [
              MuEquation params (MuUnGuardedRhs (MuApp _ (MuVar arg))) _ ]) | (MuPVar param) <- last params = param == arg
         f _ = False
---private
-isBooleanLiteral (MuCon "True")  = True
-isBooleanLiteral (MuCon "False") = True
-isBooleanLiteral _                                  = False
+
+isBooleanLiteral (MuLit (MuBool _)) = True
+isBooleanLiteral _                  = False

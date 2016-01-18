@@ -73,6 +73,25 @@ spec = do
     it "is True when is present in enum" $ do
       hasUsage "h" "y"  "y = [a..h]" `shouldBe` True
 
+    it "is True when required constructor is used on application" $ do
+      hasUsage "Foo" "y" "y x = Foo x" `shouldBe` True
+
+    it "is False when required constructor is not used on application" $ do
+      hasUsage "Foo" "y" "y x = Bar x" `shouldBe` False
+
+    it "is True when required function is used on list comprehension" $ do
+      hasUsage "f" "y" "y x = [ f m | m <- ms  ]" `shouldBe` True
+
+    it "is False when required function is not used on list comprehension" $ do
+      hasUsage "f" "y" "y x = [ g m | m <- ms  ]" `shouldBe` False
+
+    it "is False when there is variable hiding in list comprehension" $ do
+      hasUsage "m" "y" "y x = [ g m | m <- ms  ]" `shouldBe` False
+
+    it "is False when there is variable hiding in list comprehension generator" $ do
+      hasUsage "m" "y" "y x = [ g x | m <- ms, x <- f m]" `shouldBe` False
+
+
   describe "hasDirectRecursion" $ do
     it "is True when has direct recursion in unguarded expresion" $ do
       hasDirectRecursion "y"  "y x = y x" `shouldBe` True
