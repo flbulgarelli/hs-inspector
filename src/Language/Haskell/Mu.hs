@@ -1,79 +1,83 @@
 module Language.Haskell.Mu (
-    MuProgram(..),
-    MuDeclaration(..),
-    MuEquation(..), MuRhs(..), MuGuardedRhs(..),
-    MuExp(..), MuStmt(..),
-    MuAlt(..), MuGuardedAlts(..), MuGuardedAlt(..),
-    MuPat(..),
-    MuLitValue(..)
+    Program(..),
+    Declaration(..),
+    Equation(..),
+    Rhs(..),
+    GuardedRhs(..),
+    Expression(..),
+    MuStmt(..),
+    Alternative(..),
+    GuardedAlternatives(..),
+    GuardedAlternative(..),
+    Pattern(..),
+    LiteralValue(..)
   ) where
 
 
-data MuProgram = MuProgram [MuDeclaration] deriving (Show)
+data Program = Program [Declaration] deriving (Show)
 
-type MuId = String
+type Identifier = String
 
-
-data MuDeclaration
-         = MuTypeAlias MuId
-         | MuRecordDeclaration MuId
-         | MuTypeSignature MuId
-         | MuFunction MuId [MuEquation]
-         | MuConstant MuId MuRhs [MuDeclaration]
+data Declaration
+         = TypeAlias Identifier
+         | RecordDeclaration Identifier
+         | TypeSignature Identifier
+         | FunctionDeclaration Identifier [Equation]
+         | ConstantDeclaration Identifier Rhs [Declaration]
   deriving (Eq,Show)
 
-data MuEquation = MuEquation [MuPat] MuRhs [MuDeclaration] deriving (Eq,Show)
+data Equation = Equation [Pattern] Rhs [Declaration] deriving (Eq,Show)
 
-data MuRhs
-         = MuUnGuardedRhs MuExp
-         | MuGuardedRhss  [MuGuardedRhs]
+data Rhs
+         = UnguardedRhs Expression
+         | GuardedRhss  [GuardedRhs]
   deriving (Eq,Show)
 
-data MuGuardedRhs = MuGuardedRhs MuExp MuExp deriving (Eq,Show)
+data GuardedRhs = GuardedRhs Expression Expression deriving (Eq,Show)
 
-data MuExp
-        = MuVar MuId
-        | MuLit MuLitValue
-        | MuInfixApp MuExp String MuExp
-        | MuApp MuExp MuExp
-        | MuLambda [MuPat] MuExp
-        | MuLet [MuDeclaration] MuExp          -- ^ local declarations with @let@
-        | MuIf MuExp MuExp MuExp
-        | MuCase MuExp [MuAlt]
-        | MuTuple [MuExp]
-        | MuList [MuExp]
-        | MuListComp MuExp [MuStmt]
-        | MuExpOther
+data Expression
+        = Variable Identifier
+        | Literal LiteralValue
+        | InfixApplication Expression String Expression
+        | Application Expression Expression
+        | Lambda [Pattern] Expression
+        | Let [Declaration] Expression          -- ^ local declarations with @let@
+        | If Expression Expression Expression
+        | Match Expression [Alternative]
+        | MuTuple [Expression]
+        | MuList [Expression]
+        | ListComprehension Expression [MuStmt]
+        | ExpressionOther
   deriving (Eq,Show)
 
-data MuPat
-        = MuPVar String                 -- ^ variable
-        | MuPLit String              -- ^ literal constant
-        | MuPInfixApp MuPat String MuPat
-        | MuPApp String [MuPat]        -- ^ data constructor and argument
-        | MuPTuple [MuPat]              -- ^ tuple pattern
-        | MuPList [MuPat]               -- ^ list pattern
-        | MuPAsPat String MuPat         -- ^ @\@@-pattern
-        | MuPWildCard                   -- ^ wildcard pattern (@_@)
-        | MuPOther
+data Pattern
+        = VariablePattern String                 -- ^ variable
+        | LiteralPattern String              -- ^ literal constant
+        | InfixApplicationPattern Pattern String Pattern
+        | ApplicationPattern String [Pattern]        -- ^ data constructor and argument
+        | TuplePattern [Pattern]              -- ^ tuple pattern
+        | ListPattern [Pattern]               -- ^ list pattern
+        | AsPattern String Pattern         -- ^ @\@@-pattern
+        | WildcardPattern                   -- ^ wildcard pattern (@_@)
+        | OtherPattern
   deriving (Eq,Show)
 
 data MuStmt
-        = MuGenerator MuPat MuExp
-        | MuQualifier MuExp
-        | MuLetStmt [MuDeclaration]
+        = MuGenerator Pattern Expression
+        | MuQualifier Expression
+        | LetStmt [Declaration]
   deriving (Eq,Show)
 
-data MuAlt = MuAlt MuPat MuGuardedAlts [MuDeclaration] deriving (Eq,Show)
+data Alternative = Alternative Pattern GuardedAlternatives [Declaration] deriving (Eq,Show)
 
-data MuGuardedAlts
-        = MuUnGuardedAlt MuExp          -- ^ @->@ /exp/
-        | MuGuardedAlts  [MuGuardedAlt] -- ^ /gdpat/
+data GuardedAlternatives
+        = UnguardedAlternative Expression          -- ^ @->@ /exp/
+        | GuardedAlternatives  [GuardedAlternative] -- ^ /gdpat/
   deriving (Eq,Show)
 
-data MuGuardedAlt = MuGuardedAlt MuExp MuExp deriving (Eq,Show)
+data GuardedAlternative = GuardedAlternative Expression Expression deriving (Eq,Show)
 
-data MuLitValue
+data LiteralValue
           = MuBool Bool
           | MuInteger Integer
           | MuFloat Rational

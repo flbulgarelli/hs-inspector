@@ -9,7 +9,7 @@ module Language.Haskell.Explorer (
   expressionsOf,
   expressionToBinding,
   isParseable,
-  MuExp(..),
+  Expression(..),
   Binding,
   AST) where
 
@@ -22,12 +22,12 @@ import Data.List (nub, intercalate)
 import Data.String (IsString(..))
 
 type Binding = String
-type AST = MuProgram
+type AST = Program
 
 -- xxxOf functions: take a binding and code
 -- parseXxx functions: take just code
 
-instance IsString MuProgram where
+instance IsString Program where
   fromString = astOf
 
 isParseable :: String -> Bool
@@ -37,58 +37,58 @@ isParseable code | ParseOk ast <- parseModule code = True
 astOf :: String -> AST
 astOf code | ParseOk ast <- parseModule code = mu ast
 
-mu :: HsModule -> MuProgram
-mu (HsModule _ _ _ _ decls) = (MuProgram (concatMap muDecls decls))
+mu :: HsModule -> Program
+mu (HsModule _ _ _ _ decls) = (Program (concatMap muDecls decls))
   where
-    muDecls (HsTypeDecl _ name _ _)      = [MuTypeAlias (muName name)]
-    muDecls (HsDataDecl _ _ name _ _ _ ) = [MuRecordDeclaration (muName name)]
-    muDecls (HsTypeSig _ names _) = map (\name -> MuTypeSignature (muName name)) names
+    muDecls (HsTypeDecl _ name _ _)      = [TypeAlias (muName name)]
+    muDecls (HsDataDecl _ _ name _ _ _ ) = [RecordDeclaration (muName name)]
+    muDecls (HsTypeSig _ names _) = map (\name -> TypeSignature (muName name)) names
     muDecls (HsFunBind equations) | (HsMatch _ name _ _ _) <- head equations =
-                                        [MuFunction (muName name) (map muEquation equations)]
-    muDecls (HsPatBind _ (HsPVar name) rhs decls) = [MuConstant (muName name) (muRhs rhs) (concatMap muDecls decls)]
+                                        [FunctionDeclaration (muName name) (map muEquation equations)]
+    muDecls (HsPatBind _ (HsPVar name) rhs decls) = [ConstantDeclaration (muName name) (muRhs rhs) (concatMap muDecls decls)]
     muDecls _ = []
 
-    muEquation :: HsMatch -> MuEquation
+    muEquation :: HsMatch -> Equation
     muEquation (HsMatch _ _ patterns rhs locals) =
-         MuEquation (map muPat patterns) (muRhs rhs) (concatMap muDecls locals)
+         Equation (map muPat patterns) (muRhs rhs) (concatMap muDecls locals)
 
-    muRhs (HsUnGuardedRhs exp)          = MuUnGuardedRhs (muExp exp)
-    muRhs (HsGuardedRhss  guards) = MuGuardedRhss (map muGuardedRhs guards)
+    muRhs (HsUnGuardedRhs exp)          = UnguardedRhs (muExp exp)
+    muRhs (HsGuardedRhss  guards) = GuardedRhss (map muGuardedRhs guards)
 
-    muGuardedRhs (HsGuardedRhs _ condition body) = (MuGuardedRhs (muExp condition) (muExp body))
+    muGuardedRhs (HsGuardedRhs _ condition body) = (GuardedRhs (muExp condition) (muExp body))
 
-    muPat (HsPVar name) = MuPVar (muName name)                 -- ^ variable
-    muPat (HsPLit _) = MuPLit ""              -- ^ literal constant
-    --MuPat HsPInfixApp = MuPInfixApp MuPat MuQName MuPat
-    --MuPat HsPApp = MuPApp MuQName [MuPat]        -- ^ data constructor and argument
-    muPat (HsPTuple elements) = MuPTuple (map muPat elements)
-    muPat (HsPList elements) = MuPList (map muPat elements)
+    muPat (HsPVar name) = VariablePattern (muName name)                 -- ^ variable
+    muPat (HsPLit _) = LiteralPattern ""              -- ^ literal constant
+    --Pattern HsPInfixApp = InfixApplicationPattern Pattern MuQName Pattern
+    --Pattern HsPApp = ApplicationPattern MuQName [Pattern]        -- ^ data constructor and argument
+    muPat (HsPTuple elements) = TuplePattern (map muPat elements)
+    muPat (HsPList elements) = ListPattern (map muPat elements)
     muPat (HsPParen pattern) = muPat pattern
-    --MuPat HsPAsPat = MuPAsPat String MuPat
-    muPat HsPWildCard = MuPWildCard
-    muPat _ = MuPOther
+    --Pattern HsPAsPat = AsPattern String Pattern
+    muPat HsPWildCard = WildcardPattern
+    muPat _ = OtherPattern
 
-    muExp (HsVar name) = MuVar (muQName name)
-    muExp (HsCon (UnQual (HsIdent "True")))  = MuLit (MuBool True)
-    muExp (HsCon (UnQual (HsIdent "False"))) = MuLit (MuBool False)
-    muExp (HsCon name)                       = MuVar (muQName name)
-    muExp (HsLit lit) = MuLit (muLit lit)
-    muExp (HsInfixApp e1 op e2) = MuInfixApp (muExp e1) (muQOp op) (muExp e2)  -- ^ infix application
-    muExp (HsApp e1 e2) = MuApp (muExp e1) (muExp e2)             -- ^ ordinary application
-    muExp (HsNegApp e) = MuApp (MuVar "-") (muExp e)
-    muExp (HsLambda _ args exp) = MuLambda (map muPat args) (muExp exp)
-    --muExp HsLet = MuLet [MuDeclaration] MuExp          -- ^ local declarations with @let@
-    muExp (HsIf e1 e2 e3) = MuIf (muExp e1) (muExp e2) (muExp e3)
-    --muExp HsCase = MuCase MuExp [MuAlt]          -- ^ @case@ /exp/ @of@ /alts/
-    muExp (HsTuple elements) = MuTuple (map muExp elements)               -- ^ tuple MuExp
+    muExp (HsVar name) = Variable (muQName name)
+    muExp (HsCon (UnQual (HsIdent "True")))  = Literal (MuBool True)
+    muExp (HsCon (UnQual (HsIdent "False"))) = Literal (MuBool False)
+    muExp (HsCon name)                       = Variable (muQName name)
+    muExp (HsLit lit) = Literal (muLit lit)
+    muExp (HsInfixApp e1 op e2) = InfixApplication (muExp e1) (muQOp op) (muExp e2)  -- ^ infix application
+    muExp (HsApp e1 e2) = Application (muExp e1) (muExp e2)             -- ^ ordinary application
+    muExp (HsNegApp e) = Application (Variable "-") (muExp e)
+    muExp (HsLambda _ args exp) = Lambda (map muPat args) (muExp exp)
+    --muExp HsLet = Let [Declaration] Expression          -- ^ local declarations with @let@
+    muExp (HsIf e1 e2 e3) = If (muExp e1) (muExp e2) (muExp e3)
+    --muExp HsMatch = Match Expression [Alternative]          -- ^ @case@ /exp/ @of@ /alts/
+    muExp (HsTuple elements) = MuTuple (map muExp elements)               -- ^ tuple Expression
     muExp (HsList elements) = MuList (map muExp elements)
     muExp (HsParen e) = (muExp e)
-    muExp (HsEnumFrom from)              = MuApp (MuVar "enumFrom") (muExp from)
-    muExp (HsEnumFromTo from to)         = MuApp (MuApp (MuVar "enumFromTo") (muExp from)) (muExp to)
-    muExp (HsEnumFromThen from thn)      = MuApp (MuApp (MuVar "enumFromThen") (muExp from)) (muExp thn)
-    muExp (HsEnumFromThenTo from thn to) = MuApp (MuApp (MuApp (MuVar "enumFromThenTo") (muExp from)) (muExp thn)) (muExp to)
-    muExp (HsListComp exp stmts)         = MuListComp (muExp exp) (map muStmt stmts)
-    muExp _ = MuExpOther
+    muExp (HsEnumFrom from)              = Application (Variable "enumFrom") (muExp from)
+    muExp (HsEnumFromTo from to)         = Application (Application (Variable "enumFromTo") (muExp from)) (muExp to)
+    muExp (HsEnumFromThen from thn)      = Application (Application (Variable "enumFromThen") (muExp from)) (muExp thn)
+    muExp (HsEnumFromThenTo from thn to) = Application (Application (Application (Variable "enumFromThenTo") (muExp from)) (muExp thn)) (muExp to)
+    muExp (HsListComp exp stmts)         = ListComprehension (muExp exp) (map muStmt stmts)
+    muExp _ = ExpressionOther
 
     muLit (HsChar        v) = MuString [v]
     muLit (HsString      v) = MuString v
@@ -118,13 +118,13 @@ mu (HsModule _ _ _ _ decls) = (MuProgram (concatMap muDecls decls))
     muStmt (HsGenerator _ pat exp) = MuGenerator (muPat pat) (muExp exp)
     muStmt (HsQualifier exp) = MuQualifier (muExp exp)
 
-declsOf :: Binding -> AST -> [MuDeclaration]
+declsOf :: Binding -> AST -> [Declaration]
 declsOf binding = filter (isBinding binding) . parseDecls
 
-rhssOf :: Binding -> AST -> [MuRhs]
+rhssOf :: Binding -> AST -> [Rhs]
 rhssOf binding = concatMap rhsForBinding . declsOf binding
 
-expressionsOf :: Binding -> AST -> [MuExp]
+expressionsOf :: Binding -> AST -> [Expression]
 expressionsOf binding code = do
   rhs <- rhssOf binding code
   top <- topExpressions rhs
@@ -138,41 +138,41 @@ bindingsOf binding code = nub $ do
 transitiveBindingsOf :: Binding -> AST -> [Binding]
 transitiveBindingsOf binding code =  expand (`bindingsOf` code) binding
 
-parseDecls :: AST -> [MuDeclaration]
-parseDecls (MuProgram decls) = decls
+parseDecls :: AST -> [Declaration]
+parseDecls (Program decls) = decls
 
 parseBindings :: AST -> [Binding]
 parseBindings = map declName . parseDecls
 
-expressionToBinding :: MuExp -> Maybe Binding
-expressionToBinding (MuVar    q) = Just q
+expressionToBinding :: Expression -> Maybe Binding
+expressionToBinding (Variable    q) = Just q
 expressionToBinding _                = Nothing
 
 -- private
 
-topExpressions :: MuRhs -> [MuExp]
-topExpressions (MuUnGuardedRhs e) = [e]
-topExpressions (MuGuardedRhss rhss) = rhss >>= \(MuGuardedRhs es1 es2) -> [es1, es2]
+topExpressions :: Rhs -> [Expression]
+topExpressions (UnguardedRhs e) = [e]
+topExpressions (GuardedRhss rhss) = rhss >>= \(GuardedRhs es1 es2) -> [es1, es2]
 
-unfoldExpression :: MuExp -> [MuExp]
+unfoldExpression :: Expression -> [Expression]
 unfoldExpression expr = expr : concatMap unfoldExpression (subExpressions expr)
 
-subExpressions :: MuExp -> [MuExp]
-subExpressions (MuInfixApp a b c) = [a, (MuVar b), c]
-subExpressions (MuApp a b)        = [a, b]
-subExpressions (MuLambda _ a)   = [a]
+subExpressions :: Expression -> [Expression]
+subExpressions (InfixApplication a b c) = [a, (Variable b), c]
+subExpressions (Application a b)        = [a, b]
+subExpressions (Lambda _ a)   = [a]
 subExpressions (MuList as)      = as
-subExpressions (MuListComp a _)   = [a] --TODO
+subExpressions (ListComprehension a _)   = [a] --TODO
 subExpressions (MuTuple as)      = as
-subExpressions (MuIf a b c)       = [a, b, c]
+subExpressions (If a b c)       = [a, b, c]
 subExpressions _ = []
 
-isBinding :: Binding -> MuDeclaration -> Bool
+isBinding :: Binding -> Declaration -> Bool
 isBinding binding = (==binding).declName
 
-rhsForBinding :: MuDeclaration -> [MuRhs]
-rhsForBinding (MuConstant _ rhs localDecls) = concatRhs rhs localDecls
-rhsForBinding (MuFunction _ cases) = cases >>= \(MuEquation _ rhs localDecls) -> concatRhs rhs localDecls
+rhsForBinding :: Declaration -> [Rhs]
+rhsForBinding (ConstantDeclaration _ rhs localDecls) = concatRhs rhs localDecls
+rhsForBinding (FunctionDeclaration _ cases) = cases >>= \(Equation _ rhs localDecls) -> concatRhs rhs localDecls
 rhsForBinding _ = []
 
 concatRhs rhs l = [rhs] ++ concatMap rhsForBinding l

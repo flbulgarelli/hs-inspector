@@ -29,21 +29,21 @@ type GlobalInspection = AST  -> Bool
 -- in its definition
 hasComposition :: Inspection
 hasComposition = hasExpression f
-  where f (MuVar ".") = True
+  where f (Variable ".") = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses guards
 -- in its definition
 hasGuards :: Inspection
 hasGuards = hasRhs f
-  where f (MuGuardedRhss _) = True
+  where f (GuardedRhss _) = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses ifs
 -- in its definition
 hasIf :: Inspection
 hasIf = hasExpression f
-  where f (MuIf _ _ _) = True
+  where f (If _ _ _) = True
         f _ = False
 
 -- | Inspection that tells whether a binding uses ifs or guards
@@ -55,7 +55,7 @@ hasConditional target code = hasIf target code || hasGuards target code
 -- in its definition
 hasLambda :: Inspection
 hasLambda = hasExpression f
-  where f (MuLambda _ _) = True
+  where f (Lambda _ _) = True
         f _ = False
 
 
@@ -74,7 +74,7 @@ hasUsage target = hasExpression f
 -- in its definition
 hasComprehension :: Inspection
 hasComprehension = hasExpression f
-  where f (MuListComp _ _) = True
+  where f (ListComprehension _ _) = True
         f _ = False
 
 -- | Inspection that tells whether a top level binding exists
@@ -83,27 +83,27 @@ hasBinding binding = not.null.rhssOf binding
 
 hasTypeDeclaration :: Inspection
 hasTypeDeclaration binding = hasDecl f
-  where f (MuTypeAlias hsName) = isName binding hsName
+  where f (TypeAlias hsName) = isName binding hsName
         f _                   = False
 
 hasTypeSignature :: Inspection
 hasTypeSignature binding = hasDecl f
-  where f (MuTypeSignature hsName)  = isName binding hsName
+  where f (TypeSignature hsName)  = isName binding hsName
         f _                       = False
 
 hasAnonymousVariable :: Inspection
 hasAnonymousVariable binding = any f . declsOf binding
-  where f (MuFunction _ hsMatches)    = any (any (== MuPWildCard) . p) hsMatches
+  where f (FunctionDeclaration _ hsMatches)    = any (any (== WildcardPattern) . p) hsMatches
         f _                        = False
-        p (MuEquation params _ _) = params
+        p (Equation params _ _) = params
 
-hasExpression :: (MuExp -> Bool) -> Inspection
+hasExpression :: (Expression -> Bool) -> Inspection
 hasExpression f binding = has f (expressionsOf binding)
 
-hasRhs :: (MuRhs -> Bool)-> Inspection
+hasRhs :: (Rhs -> Bool)-> Inspection
 hasRhs f binding = has f (rhssOf binding)
 
-hasDecl :: (MuDeclaration -> Bool) -> GlobalInspection
+hasDecl :: (Declaration -> Bool) -> GlobalInspection
 hasDecl f = has f parseDecls
 
 -- private

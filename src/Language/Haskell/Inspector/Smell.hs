@@ -13,7 +13,7 @@ import Language.Haskell.Inspector
 -- | Inspection that tells whether a binding has expressions like 'x == True'
 hasRedundantBooleanComparison :: Inspection
 hasRedundantBooleanComparison = hasExpression f
-  where f (MuInfixApp x c y) = any isBooleanLiteral [x, y] && isComp c
+  where f (InfixApplication x c y) = any isBooleanLiteral [x, y] && isComp c
         f _ = False
 
         isComp c = c == "==" || c == "/="
@@ -22,7 +22,7 @@ hasRedundantBooleanComparison = hasExpression f
 -- boolean literals
 hasRedundantIf :: Inspection
 hasRedundantIf = hasExpression f
-  where f (MuIf _ x y) = all isBooleanLiteral [x, y]
+  where f (If _ x y) = all isBooleanLiteral [x, y]
         f _            = False
 
 
@@ -30,25 +30,25 @@ hasRedundantIf = hasExpression f
 -- boolean literals
 hasRedundantGuards :: Inspection
 hasRedundantGuards = hasRhs f -- TODO not true when condition is a pattern
-  where f (MuGuardedRhss [
-            MuGuardedRhs _ x,
-            MuGuardedRhs (MuVar "otherwise") y]) = all isBooleanLiteral [x, y]
+  where f (GuardedRhss [
+            GuardedRhs _ x,
+            GuardedRhs (Variable "otherwise") y]) = all isBooleanLiteral [x, y]
         f _ = False
 
 
 -- | Inspection that tells whether a binding has lambda expressions like '\x -> g x'
 hasRedundantLambda :: Inspection
 hasRedundantLambda = hasExpression f
-  where f (MuLambda [MuPVar (x)] (MuApp _ (MuVar (y)))) = x == y
+  where f (Lambda [VariablePattern (x)] (Application _ (Variable (y)))) = x == y
         f _ = False -- TODO consider parenthesis and symbols
 
 -- | Inspection that tells whether a binding has parameters that
 -- can be avoided using point-free
 hasRedundantParameter :: Inspection
 hasRedundantParameter binding = any f . declsOf binding
-  where f (MuFunction _ [
-             MuEquation params (MuUnGuardedRhs (MuApp _ (MuVar arg))) _ ]) | (MuPVar param) <- last params = param == arg
+  where f (FunctionDeclaration _ [
+             Equation params (UnguardedRhs (Application _ (Variable arg))) _ ]) | (VariablePattern param) <- last params = param == arg
         f _ = False
 
-isBooleanLiteral (MuLit (MuBool _)) = True
+isBooleanLiteral (Literal (MuBool _)) = True
 isBooleanLiteral _                  = False

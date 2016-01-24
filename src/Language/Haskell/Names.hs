@@ -7,10 +7,10 @@ import  Language.Haskell.Mu
 isName :: String -> String -> Bool
 isName n hsName = hsName == n
 
-declName :: MuDeclaration -> String
-declName (MuTypeSignature b ) = b
-declName (MuTypeAlias b ) = b
-declName (MuConstant n _ _) = n
-declName (MuFunction n cases)  = n
+declName :: Declaration -> String
+declName (TypeSignature b ) = b
+declName (TypeAlias b ) = b
+declName (ConstantDeclaration n _ _) = n
+declName (FunctionDeclaration n cases)  = n
 declName _                  = []
 
